@@ -25,7 +25,7 @@ BLOCK_LIST = [
 def load_spacy_model(model_name: str, all_cards: list[str]):
     """loads new spacy model"""
     # load model
-    nlp = spacy.load(model_name)
+    nlp = spacy.blank("en")
     matcher = FuzzyMatcher(nlp.vocab)
 
     # set up matcher
