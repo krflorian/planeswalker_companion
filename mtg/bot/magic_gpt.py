@@ -2,16 +2,22 @@ from dataclasses import dataclass, field
 import yaml
 import openai
 import logging
+import os
 
 from mtg.data_handler import CardDB
 
 logging.basicConfig(encoding="utf-8", level=logging.INFO)
 
-with open("config/config.yaml", "r") as infile:
-    config = yaml.load(infile, Loader=yaml.FullLoader)
+try:
+    with open("config/config.yaml", "r") as infile:
+        config = yaml.load(infile, Loader=yaml.FullLoader)
+    openai.api_key = config.get("open_ai_token")
+    logging.info("loaded open ai token from config file ")
+except:
+    logging.warn("did not find config file")
+    openai.api_key = os.environ["open_ai_token"]
+    logging.info("loaded open ai token from environment")
 
-# roles: system, user, assistant
-openai.api_key = config.get("open_ai_token")
 
 # list models
 # models = openai.Model.list()
