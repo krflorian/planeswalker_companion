@@ -20,5 +20,4 @@ with gradio.Blocks() as demo:
     txt.submit(ask, txt, chatbot)
     txt.submit(None, None, txt, _js="() => {''}")
 
-if __name__ == "__main__":
-    demo.launch(share=True)
+demo.launch()
