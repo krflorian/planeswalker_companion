@@ -163,3 +163,5 @@ cython_debug/
 config/*
 tryhard.py
 .venv
+*.code-workspace
+.vscode 
