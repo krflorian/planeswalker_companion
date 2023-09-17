@@ -69,7 +69,7 @@ class CardDB:
 
     def extract_card_data_from_doc(self, doc: str) -> list[Card]:
         """Search for card objects corresponding to doc"""
-        return [self.card_name_2_card.get(entity.label_) for entity in doc.ents]
+        return [self.card_name_2_card.get(card_name) for card_name in doc._.card_names]
 
     def replace_card_names_with_urls(self, doc) -> str:
         text = ""

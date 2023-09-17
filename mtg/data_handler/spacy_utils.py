@@ -1,7 +1,7 @@
 import spacy
 from spacy.language import Language
 from spaczz.matcher import FuzzyMatcher
-from spacy.tokens import Span
+from spacy.tokens import Span, Doc
 import logging
 
 BLOCK_LIST = [
@@ -16,7 +16,10 @@ BLOCK_LIST = [
     "deal damage",
     "sacrifice",
     "battlefield",
+    "sorry",
 ]
+
+Doc.set_extension("card_names", default=[])
 
 
 def load_spacy_model(model_name: str, all_cards: list[str]):
@@ -43,13 +46,15 @@ def load_spacy_model(model_name: str, all_cards: list[str]):
     @Language.component("card_name_matcher")
     def matcher_component(doc):
         matches = matcher(doc)
-        entities = []
+        entities: list[Span] = []
         for card_name, start, end, ratio, pattern in matches:
             if ratio > 93 and (doc[start:end].text.lower() not in BLOCK_LIST):
                 logging.info(
                     f"adding card data for {card_name}, similarity {ratio}, text {doc[start:end]}"
                 )
                 entities.append(Span(doc, start, end, card_name))
+
+        doc._.card_names = list(set([entity.label_ for entity in entities]))
         doc.ents = list(spacy.util.filter_spans(entities))
         return doc
 
