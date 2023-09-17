@@ -48,7 +48,11 @@ class Card:
         if self.color_identity:
             text.append("color identity: " + " ".join(self.color_identity))
         text.append(self.oracle)
+
+        # rulings
         if self.rulings:
-            text.append("Rulings for this card: ")
+            text.append(f"Rulings for {self.name}: ")
             text.append("\n".join(self.rulings))
+        else:
+            text.append(f"There are no Rulings available for {self.name}")
         return "\n".join(text)

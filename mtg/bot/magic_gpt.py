@@ -86,7 +86,9 @@ class MagicGPT:
         # delete remember message from history
         del self._history[-2]
         self._history.append({"role": "assistant", "content": response})
+        self._history = self._history[-4:]
 
         # build chat
         self.chat_history.append([processed_query, processed_response])
+        self.chat_history = self.chat_history[-2:]
         return self.chat_history
