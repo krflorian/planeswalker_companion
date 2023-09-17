@@ -1,3 +1,6 @@
+!pip install https://huggingface.co/spacy/en_core_web_lg/resolve/main/en_core_web_lg-any-py3-none-any.whl
+
+
 import spacy
 from spacy.language import Language
 from spaczz.matcher import FuzzyMatcher
