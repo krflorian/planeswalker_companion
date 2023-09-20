@@ -4,7 +4,6 @@ from pathlib import Path
 from mtg.data_handler import CardDB
 from mtg.bot import MagicGPT
 
-
 all_cards_file = Path("data/raw/scryfall_all_cards_with_rulings.json")
 
 data_handler = CardDB(all_cards_file)

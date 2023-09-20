@@ -11,6 +11,7 @@ BLOCK_LIST = [
     "consider",
     "will",
     "vigilance",
+    "lifelink",
     "remove",
     "disrupt",
     "deal damage",
