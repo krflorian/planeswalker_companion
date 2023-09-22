@@ -1,3 +1,4 @@
+# %%
 import spacy
 from spacy.language import Language
 from spaczz.matcher import FuzzyMatcher
@@ -16,6 +17,8 @@ BLOCK_LIST = [
     "disrupt",
     "deal damage",
     "sacrifice",
+    "sacrificed",
+    "persist",
     "battlefield",
     "sorry",
 ]
@@ -23,11 +26,11 @@ BLOCK_LIST = [
 Doc.set_extension("card_names", default=[])
 
 
-def load_spacy_model(model_name: str, all_cards: list[str]):
+def load_spacy_model(all_cards: list[str]):
     """loads new spacy model"""
     # load model
     nlp = spacy.blank("en")
-    matcher = FuzzyMatcher(nlp.vocab)
+    matcher = FuzzyMatcher(nlp.vocab, fuzzy_func="quick", min_r1=93, min_r2=93)
 
     # set up matcher
     print("setting up matcher...")
@@ -48,8 +51,10 @@ def load_spacy_model(model_name: str, all_cards: list[str]):
     def matcher_component(doc):
         matches = matcher(doc)
         entities: list[Span] = []
+        print("matches:", len(matches))
+        print(matches)
         for card_name, start, end, ratio, pattern in matches:
-            if ratio > 93 and (doc[start:end].text.lower() not in BLOCK_LIST):
+            if doc[start:end].text.lower() not in BLOCK_LIST:
                 logging.info(
                     f"adding card data for {card_name}, similarity {ratio}, text {doc[start:end]}"
                 )

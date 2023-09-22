@@ -7,7 +7,16 @@ import os
 from mtg.data_handler import CardDB
 from .chat_history import ChatHistory
 
-logging.basicConfig(encoding="utf-8", level=logging.DEBUG)
+
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.INFO)
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s %(message)s",
+    handlers=[logging.FileHandler("chat_logs.log", mode="w"), stream_handler],
+)
+
 
 try:
     with open("config/config.yaml", "r") as infile:
@@ -26,16 +35,11 @@ class MagicGPT:
     chat_history: ChatHistory = ChatHistory()
 
     def ask(self, query):
-        query_doc = self.card_db.process_text(query)
-        processed_query = self.card_db.replace_card_names_with_urls(query_doc)
-        cards = self.card_db.extract_card_data_from_doc(query_doc)
-
-        self.chat_history.add_message(
-            text=query, role="user", cards=cards, processed_text=processed_query
-        )
+        # process query
+        message = self.card_db.create_message(query, role="user")
+        self.chat_history.add_message(message=message)
 
         prompt = self.chat_history.create_prompt()
-        logging.debug("sending question: %s", prompt)
         chat_completion = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
             messages=prompt,
@@ -45,10 +49,7 @@ class MagicGPT:
         response = chat_completion.choices[0].message.content
 
         # process response
-        response_doc = self.card_db.process_text(response)
-        processed_response = self.card_db.replace_card_names_with_urls(response_doc)
-        self.chat_history.add_message(
-            text=response, role="assistant", cards=[], processed_text=processed_response
-        )
+        message = self.card_db.create_message(response, role="assistant")
+        self.chat_history.add_message(message=message)
 
         return self.chat_history.create_human_readable_chat()
