@@ -51,17 +51,14 @@ def load_spacy_model(all_cards: list[str]):
     def matcher_component(doc):
         matches = matcher(doc)
         entities: list[Span] = []
-        print("matches:", len(matches))
-        print(matches)
+        logging.info(f"matched {len(matches)} cards: {matches}")
         for card_name, start, end, ratio, pattern in matches:
             if doc[start:end].text.lower() not in BLOCK_LIST:
-                logging.info(
-                    f"adding card data for {card_name}, similarity {ratio}, text {doc[start:end]}"
-                )
                 entities.append(Span(doc, start, end, card_name))
 
         doc._.card_names = list(set([entity.label_ for entity in entities]))
         doc.ents = list(spacy.util.filter_spans(entities))
+        logging.info("added cards: ", doc._.card_names)
         return doc
 
     nlp.add_pipe("card_name_matcher", last=True)
