@@ -2,16 +2,14 @@ from pathlib import Path
 import json
 from spacy.tokens import Doc
 
-from mtg.objects import Card
+from mtg.objects import Card, Message
 from .spacy_utils import load_spacy_model
 
 BLOCKED_CARD_TYPES = ["Card", "Stickers", "Hero"]
 
 
 class CardDB:
-    def __init__(
-        self, all_cards_file: Path, spacy_model_name: str = "en_core_web_lg"
-    ) -> None:
+    def __init__(self, all_cards_file: Path) -> None:
         # read set data
         all_cards, all_sets = [], set()
 
@@ -49,7 +47,7 @@ class CardDB:
         print(f"loaded {len(all_cards)} cards...")
 
         # initialize spacy model
-        nlp = load_spacy_model(spacy_model_name, [c.name for c in all_cards])
+        nlp = load_spacy_model([c.name for c in all_cards])
 
         # init variables
         self.card_name_2_card: dict[str, Card] = {c.name: c for c in all_cards}
@@ -83,3 +81,12 @@ class CardDB:
                 text += token.whitespace_
 
         return text
+
+    def create_message(self, text: str, role) -> Message:
+        doc = self.process_text(text)
+        cards = self.extract_card_data_from_doc(doc)
+        processed_text = self.replace_card_names_with_urls(doc)
+        message = Message(
+            text=text, role=role, processed_text=processed_text, cards=cards
+        )
+        return message
