@@ -58,7 +58,7 @@ def load_spacy_model(all_cards: list[str]):
 
         doc._.card_names = list(set([entity.label_ for entity in entities]))
         doc.ents = list(spacy.util.filter_spans(entities))
-        logging.info("added cards: ", doc._.card_names)
+        logging.info(f"added cards: {doc._.card_names}")
         return doc
 
     nlp.add_pipe("card_name_matcher", last=True)
