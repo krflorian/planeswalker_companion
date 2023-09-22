@@ -27,14 +27,14 @@ class ChatHistory:
             self.chat = []
         self.chat.append(message)
 
-    def create_prompt(self, number_of_remembered_messages: int = 4):
+    def create_prompt(self, number_of_remembered_messages: int = 6):
         prompt = [self.system_message.to_gpt_format()]
         for chat_message in self.chat[-number_of_remembered_messages:]:
             prompt.append(chat_message.to_gpt_format())
         prompt[-1]["content"] = REMEMBER_TEXT + prompt[-1]["content"]
         return prompt
 
-    def create_human_readable_chat(self, number_of_displayed_messages=4):
+    def create_human_readable_chat(self, number_of_displayed_messages=6):
         chat = []
         for message in self.chat[-number_of_displayed_messages:]:
             if message.role == "user":

@@ -69,12 +69,15 @@ class CardDB:
         """Search for card objects corresponding to doc"""
         return [self.card_name_2_card.get(card_name) for card_name in doc._.card_names]
 
-    def replace_card_names_with_urls(self, doc) -> str:
+    def replace_card_names_with_urls(self, doc, role="user") -> str:
         text = ""
         for token in doc:
             if token.ent_type_:
                 card = self.card_name_2_card[token.ent_type_]
-                text += f"[{card.name}]({card.image_url})"
+                if role == "assistant":
+                    text += f"[{token.text}]({card.image_url})"
+                else:
+                    text += f"[{card.name}]({card.image_url})"
                 text += token.whitespace_
             else:
                 text += token.text
@@ -85,7 +88,7 @@ class CardDB:
     def create_message(self, text: str, role) -> Message:
         doc = self.process_text(text)
         cards = self.extract_card_data_from_doc(doc)
-        processed_text = self.replace_card_names_with_urls(doc)
+        processed_text = self.replace_card_names_with_urls(doc, role)
         message = Message(
             text=text, role=role, processed_text=processed_text, cards=cards
         )
