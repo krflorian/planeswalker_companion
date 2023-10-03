@@ -13,6 +13,6 @@ class Message:
         content = ""
         if self.cards and self.role == "user":
             cards_context = "\n".join([card.to_text() for card in self.cards])
-            content += f"CONTEXT: \n{cards_context}\n\n"
+            content += f"CARD DATA: \n{cards_context}\n\n"
         content += f"\n{self.text}"
         return {"role": self.role, "content": content}

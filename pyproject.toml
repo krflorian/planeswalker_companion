@@ -20,6 +20,7 @@ spaczz = "^0.6.0"
 black = "^23.7.0"
 tqdm = "^4.66.1"
 spacy-lookups-data = "^1.0.5"
+hnswlib = "^0.7.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"

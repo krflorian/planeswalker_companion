@@ -8,16 +8,6 @@ from mtg.data_handler import CardDB
 from .chat_history import ChatHistory
 
 
-stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.DEBUG)
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s %(levelname)s %(message)s",
-    handlers=[logging.FileHandler("chat_logs.log", mode="w"), stream_handler],
-)
-
-
 try:
     with open("config/config.yaml", "r") as infile:
         config = yaml.load(infile, Loader=yaml.FullLoader)

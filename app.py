@@ -1,13 +1,23 @@
 import gradio
 from pathlib import Path
+import logging
 
-from mtg.data_handler import CardDB
 from mtg.bot import MagicGPT
+from mtg.data_handler import CardDB
+
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s %(message)s",
+    handlers=[logging.FileHandler("chat_logs.log", mode="w"), stream_handler],
+)
 
 all_cards_file = Path("data/raw/scryfall_all_cards_with_rulings.json")
 
-data_handler = CardDB(all_cards_file)
-magic_bot = MagicGPT(data_handler)
+card_db = CardDB(all_cards_file)
+magic_bot = MagicGPT(card_db)
 
 # creates a new Blocks app and assigns it to the variable demo.
 with gradio.Blocks() as ui:
