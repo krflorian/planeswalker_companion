@@ -4,7 +4,6 @@ emoji: 🌵🌊🌬🔥🌍
 colorFrom: red
 colorTo: orange
 sdk: gradio
-python_version: 3.9
 sdk_version: 2.0.8
 suggested_hardware: cpu-upgrade
 suggested_storage: medium
