@@ -1,3 +1,4 @@
+---
 title: MTG Rulebot Nissa
 emoji: 🌵🌊🌬🔥🌍
 colorFrom: red
@@ -15,7 +16,7 @@ tags:
   - Magic the Gathering
 pinned: false
 hf_oauth: false
-
+---
 
 
 # MTG Rule Bot "Nissa"
