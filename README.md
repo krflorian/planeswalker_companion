@@ -1,4 +1,3 @@
-```yaml 
 title: MTG Rulebot Nissa
 emoji: 🌵🌊🌬🔥🌍
 colorFrom: red
@@ -17,7 +16,6 @@ tags:
 pinned: false
 hf_oauth: false
 
-```
 
 
 # MTG Rule Bot "Nissa"
