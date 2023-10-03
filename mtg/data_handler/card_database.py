@@ -1,9 +1,11 @@
 from pathlib import Path
 import json
-from spacy.tokens import Doc
+import pickle
+import logging
 
 from mtg.objects import Card, Message
-from .spacy_utils import load_spacy_model
+from .vector_db import VectorDB
+from .spacy_utils import match_cards
 
 BLOCKED_CARD_TYPES = ["Card", "Stickers", "Hero"]
 
@@ -46,49 +48,66 @@ class CardDB:
             )
         print(f"loaded {len(all_cards)} cards...")
 
-        # initialize spacy model
-        nlp = load_spacy_model([c.name for c in all_cards])
-
         # init variables
         self.card_name_2_card: dict[str, Card] = {c.name: c for c in all_cards}
         self.all_sets: set[str] = all_sets
-        self.nlp = nlp
+
+        # init card vector db
+        try:
+            with open("data/artifacts/card_vector_db.p", "rb") as infile:
+                self.card_vector_db: VectorDB = pickle.load(infile)
+            logging.info("loaded Card Vector DB from Filesystem")
+        except:
+            self.card_vector_db: VectorDB = VectorDB(cards=all_cards)
+        self.update_card_vector_db()
 
         print("Card Data Handler ready!")
 
-    def process_text(self, text: str) -> Doc:
-        """Fuzzy search for card names and add entities"""
-        return self.nlp(text)
+    def update_card_vector_db(self):
+        cards_in_vector_db = list(self.card_vector_db.ids_2_card_name.values())
+        missing_cards = [
+            card
+            for card_name, card in self.card_name_2_card.items()
+            if card_name not in cards_in_vector_db
+        ]
+        if missing_cards:
+            names_and_embeddings = self.card_vector_db.get_embeddings(missing_cards)
+            self.card_vector_db.add(names_and_embeddings)
 
-    def process_texts(self, texts: list[str]) -> list[Doc]:
-        """Fuzzy search for card names and add entities"""
+    def replace_card_names_with_urls(self, text, cards, role="user") -> str:
+        if not cards:
+            return text
 
-        return self.nlp.pipe(texts)
-
-    def extract_card_data_from_doc(self, doc: str) -> list[Card]:
-        """Search for card objects corresponding to doc"""
-        return [self.card_name_2_card.get(card_name) for card_name in doc._.card_names]
-
-    def replace_card_names_with_urls(self, doc, role="user") -> str:
+        doc = match_cards(text=text, cards=cards)
         text = ""
         for token in doc:
             if token.ent_type_:
-                card = self.card_name_2_card[token.ent_type_]
+                # add token as url
+                card = self.card_name_2_card.get(token.ent_type_)
+                if card is None:
+                    text += token.text
                 if role == "assistant":
                     text += f"[{token.text}]({card.image_url})"
                 else:
                     text += f"[{card.name}]({card.image_url})"
                 text += token.whitespace_
             else:
+                # add token as text
                 text += token.text
                 text += token.whitespace_
 
         return text
 
     def create_message(self, text: str, role) -> Message:
-        doc = self.process_text(text)
-        cards = self.extract_card_data_from_doc(doc)
-        processed_text = self.replace_card_names_with_urls(doc, role)
+        logging.info(f"creating message for {role}")
+
+        card_names = self.card_vector_db.query(text)
+        cards = [self.card_name_2_card.get(card_name) for card_name in card_names]
+
+        processed_text = self.replace_card_names_with_urls(
+            text=text, cards=cards, role=role
+        )
+
         message = Message(
             text=text, role=role, processed_text=processed_text, cards=cards
         )
