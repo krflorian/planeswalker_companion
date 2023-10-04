@@ -25,6 +25,7 @@ class ChatHistory:
     def add_message(self, message: Message):
         if datetime.now() - self.updated_at > timedelta(minutes=120):
             self.chat = []
+        self.updated_at = datetime.now()
         self.chat.append(message)
 
     def create_prompt(self, number_of_remembered_messages: int = 4):
