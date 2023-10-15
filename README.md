@@ -14,7 +14,7 @@ tags:
 
 # MTG Rule Bot "Nissa"
 
-Nissa is an open-source chat bot for Magic: The Gathering that answers questions regarding rules and cards and helps with deckbuilding. The bot has access to all card data and rulings for the cards. Nissa is powered by [GPT-3.5-turbo](https://platform.openai.com/docs/models/gpt-3-5) and [HNSWLIB](https://github.com/nmslib/hnswlib). 
+Nissa is an open-source chat bot for Magic: The Gathering that answers questions regarding rules and cards and helps with deckbuilding. The bot has access to all card data and rulings for the cards. Nissa is powered by [GPT-3.5-turbo](https://platform.openai.com/docs/models/gpt-3-5),[langchain](https://python.langchain.com/docs/get_started/introduction) and [HNSWLIB](https://github.com/nmslib/hnswlib). 
 
 
 # Usage
