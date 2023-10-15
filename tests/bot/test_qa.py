@@ -11,6 +11,7 @@ TEST_CASES_CARD_KNOWLEDGE = [
     "what happens if i attack with Aggressive Mammoth and my opponent blocks with a 1/1 creature?",
 ]
 
+
 TEST_CASES_CARD_SEARCH = [
     "tell me a 1/1 goblin creature without any keywords.",
     "what cards can I add to my chatterfang commander deck?",

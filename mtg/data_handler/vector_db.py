@@ -73,7 +73,7 @@ class VectorDB:
         self.ids_2_card_name.update({i: name for i, name in zip(idxs, names)})
 
     def query(
-        self, text: str, k: int = 5, threshhold=0.2, lasso_threshhold: int = 0.02
+        self, text: str, k: int = 3, threshhold=0.2, lasso_threshhold: int = 0.02
     ):
         card_names = set()
         sentences = text.split(".")
