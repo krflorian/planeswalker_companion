@@ -76,27 +76,30 @@ class CardDB:
 
     def replace_card_names_with_urls(self, text, cards, role="user") -> str:
         if not cards:
-            return text
+            return text, cards
 
         doc = match_cards(text=text, cards=cards)
         text = ""
+        filtered_cards = []
         for token in doc:
             if token.ent_type_:
                 # add token as url
                 card = self.card_name_2_card.get(token.ent_type_)
                 if card is None:
                     text += token.text
-                if role == "assistant":
-                    text += f"[{token.text}]({card.image_url})"
                 else:
-                    text += f"[{card.name}]({card.image_url})"
+                    filtered_cards.append(card)
+                    if role == "assistant":
+                        text += f"[{token.text}]({card.image_url})"
+                    else:
+                        text += f"[{card.name}]({card.image_url})"
                 text += token.whitespace_
             else:
                 # add token as text
                 text += token.text
                 text += token.whitespace_
 
-        return text
+        return text, filtered_cards
 
     def create_message(self, text: str, role) -> Message:
         logging.info(f"creating message for {role}")
@@ -104,11 +107,12 @@ class CardDB:
         card_names = self.card_vector_db.query(text)
         cards = [self.card_name_2_card.get(card_name) for card_name in card_names]
 
-        processed_text = self.replace_card_names_with_urls(
+        processed_text, cards = self.replace_card_names_with_urls(
             text=text, cards=cards, role=role
         )
 
         message = Message(
             text=text, role=role, processed_text=processed_text, cards=cards
         )
+        logging.info(f"message created with cards: {' '.join([c.name for c in cards])}")
         return message
