@@ -96,6 +96,8 @@ def match_cards(text, cards):
     doc._.card_names = list(set([entity.label_ for entity in entities]))
     doc.ents = list(spacy.util.filter_spans(entities))
     doc = merge_entities(doc)
-    logger.debug(f"found cards: {doc._.card_names}")
+    logger.debug(
+        f"adding {len(doc._.card_names)} cards to spacy doc: {doc._.card_names}"
+    )
 
     return doc

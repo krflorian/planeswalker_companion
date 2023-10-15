@@ -12,7 +12,7 @@ all_cards_file = Path("data/raw/scryfall_all_cards_with_rulings.json")
 card_db = CardDB(all_cards_file)
 chat_history = ChatHistory()
 llm_chain = create_chat_model(
-    model="gpt-3.5-turbo", temperature=1, max_token_limit=3000
+    model="gpt-3.5-turbo", temperature=1, max_token_limit=2000
 )
 magic_bot = MagicGPT(llm_chain=llm_chain, card_db=card_db, chat_history=chat_history)
 
