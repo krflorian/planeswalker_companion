@@ -1,9 +1,11 @@
-from dataclasses import dataclass, field
+import time
 from langchain.chains import LLMChain
 
 from mtg.data_handler import CardDB
+from mtg.utils.logging import get_logger
 from .chat_history import ChatHistory
-from .chat import create_chat_model
+
+logger = get_logger(__name__)
 
 
 class MagicGPT:
@@ -18,7 +20,9 @@ class MagicGPT:
         self.chat_history.add_message(message=message)
         card_data = self.chat_history.get_card_data(number_of_messages=4)
 
+        start = time.time()
         response = self.llm_chain.predict(human_input=message.text, card_data=card_data)
+        logger.debug(f"runtime llm chain: {time.time()-start:.2f}sec")
 
         # process response
         message = self.card_db.create_message(response, role="assistant")

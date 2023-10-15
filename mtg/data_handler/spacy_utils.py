@@ -4,7 +4,9 @@ from spacy.language import Language
 from spaczz.matcher import FuzzyMatcher
 from spacy.tokens import Span, Doc
 from spacy.pipeline.functions import merge_entities
-import logging
+from mtg.utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 BLOCK_LIST = [
     "commander",
@@ -53,14 +55,14 @@ def load_spacy_model(cards: list[str]):
     def matcher_component(doc):
         matches = matcher(doc)
         entities: list[Span] = []
-        logging.info(f"matched {len(matches)} cards: {matches}")
+        logger.info(f"matched {len(matches)} cards: {matches}")
         for card_name, start, end, ratio, pattern in matches:
             if doc[start:end].text.lower() not in BLOCK_LIST:
                 entities.append(Span(doc, start, end, card_name))
 
         doc._.card_names = list(set([entity.label_ for entity in entities]))
         doc.ents = list(spacy.util.filter_spans(entities))
-        logging.info(f"added cards: {doc._.card_names}")
+        logger.info(f"added cards: {doc._.card_names}")
         return doc
 
     nlp.add_pipe("card_name_matcher", last=True)
@@ -86,7 +88,7 @@ def match_cards(text, cards):
     doc = nlp(text)
     matches = matcher(doc)
     entities: list[Span] = []
-    logging.info(f"matched {len(matches)} cards: {matches}")
+    logger.info(f"matched {len(matches)} cards: {matches}")
     for card_name, start, end, ratio, pattern in matches:
         if doc[start:end].text.lower() not in BLOCK_LIST:
             entities.append(Span(doc, start, end, card_name))
@@ -94,6 +96,6 @@ def match_cards(text, cards):
     doc._.card_names = list(set([entity.label_ for entity in entities]))
     doc.ents = list(spacy.util.filter_spans(entities))
     doc = merge_entities(doc)
-    logging.info(f"added cards: {doc._.card_names}")
+    logger.debug(f"found cards: {doc._.card_names}")
 
     return doc
