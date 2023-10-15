@@ -9,11 +9,16 @@ class ChatHistory:
     def add_message(self, message: Message):
         self.chat.append(message)
 
-    def get_card_data(self, number_of_messages=2):
+    def get_card_data(self, number_of_messages=2, max_number_of_cards=4):
         """Get Card data from last n messages in text form."""
         card_data = ""
+        cards = []
         for message in self.chat[-number_of_messages:]:
-            card_data += "\n".join([card.to_text() for card in message.cards])
+            cards.extend(message.cards)
+
+        card_data += "\n".join(
+            [card.to_text() for card in cards[-max_number_of_cards:]]
+        )
         if card_data == "":
             card_data = "No Card Data."
         return card_data

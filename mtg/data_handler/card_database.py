@@ -78,6 +78,8 @@ class CardDB:
             self.card_vector_db.add(names_and_embeddings)
 
     def replace_card_names_with_urls(self, text, cards, role="user") -> str:
+        """Find Card Names in text and replace them with their URL. Return only Cards that are found in the text."""
+
         if not cards:
             return text, cards
 
@@ -91,7 +93,8 @@ class CardDB:
                 if card is None:
                     text += token.text
                 else:
-                    filtered_cards.append(card)
+                    if card not in filtered_cards:
+                        filtered_cards.append(card)
                     if role == "assistant":
                         text += f"[{token.text}]({card.image_url})"
                     else:
@@ -121,7 +124,9 @@ class CardDB:
         message = Message(
             text=text, role=role, processed_text=processed_text, cards=cards
         )
-        logger.info(f"message created with cards: {' '.join([c.name for c in cards])}")
+        logger.info(
+            f"message created with {len(cards)} cards: {' '.join([str(c) for c in cards])}"
+        )
         checkpoint_end = time.time()
         logger.debug(
             f"query runtime: {checkpoint_vector_query-start:.2f}sec, text processing runtime: {checkpoint_processed_text-checkpoint_vector_query:.2f}sec, total runtime {checkpoint_end-start:.2f}sec"

@@ -18,7 +18,9 @@ class MagicGPT:
         # process query
         message = self.card_db.create_message(query, role="user")
         self.chat_history.add_message(message=message)
-        card_data = self.chat_history.get_card_data(number_of_messages=4)
+        card_data = self.chat_history.get_card_data(
+            number_of_messages=2, max_number_of_cards=4
+        )
 
         start = time.time()
         response = self.llm_chain.predict(human_input=message.text, card_data=card_data)
@@ -28,4 +30,4 @@ class MagicGPT:
         message = self.card_db.create_message(response, role="assistant")
         self.chat_history.add_message(message=message)
 
-        return self.chat_history.get_human_readable_chat(number_of_messages=4)
+        return self.chat_history.get_human_readable_chat(number_of_messages=6)

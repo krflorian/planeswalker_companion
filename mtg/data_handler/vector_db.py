@@ -71,7 +71,7 @@ class VectorDB:
         self, text: str, k: int = 3, threshhold=0.2, lasso_threshhold: int = 0.02
     ):
         card_names = set()
-        sentences = text.split(".")
+        sentences = text.split("\n")
         for sentence in sentences:
             response = openai.Embedding.create(
                 input=sentence, model="text-embedding-ada-002"
