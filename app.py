@@ -1,20 +1,11 @@
 import gradio
 from pathlib import Path
-import logging
 
 from mtg.bot import MagicGPT
 from mtg.data_handler import CardDB
 from mtg.bot.chat import create_chat_model
 from mtg.bot.chat_history import ChatHistory
 
-stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.DEBUG)
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s %(levelname)s %(message)s",
-    handlers=[logging.FileHandler("chat_logs.log", mode="w"), stream_handler],
-)
 
 all_cards_file = Path("data/raw/scryfall_all_cards_with_rulings.json")
 

@@ -1,11 +1,14 @@
 from pathlib import Path
 import json
 import pickle
-import logging
+import time
 
 from mtg.objects import Card, Message
 from .vector_db import VectorDB
 from .spacy_utils import match_cards
+from mtg.utils.logging import get_logger
+
+logger = get_logger(__name__)
 
 BLOCKED_CARD_TYPES = ["Card", "Stickers", "Hero"]
 
@@ -46,7 +49,7 @@ class CardDB:
                     rulings=card_data.get("rulings", []),
                 )
             )
-        print(f"loaded {len(all_cards)} cards...")
+        logger.info(f"loaded {len(all_cards)} cards...")
 
         # init variables
         self.card_name_2_card: dict[str, Card] = {c.name: c for c in all_cards}
@@ -56,12 +59,12 @@ class CardDB:
         try:
             with open("data/artifacts/card_vector_db.p", "rb") as infile:
                 self.card_vector_db: VectorDB = pickle.load(infile)
-            logging.info("loaded Card Vector DB from Filesystem")
+            logger.info("loaded Card Vector DB from Filesystem")
         except:
             self.card_vector_db: VectorDB = VectorDB(cards=all_cards)
         self.update_card_vector_db()
 
-        print("Card Data Handler ready!")
+        logger.info("Card Data Handler ready!")
 
     def update_card_vector_db(self):
         cards_in_vector_db = list(self.card_vector_db.ids_2_card_name.values())
@@ -102,17 +105,25 @@ class CardDB:
         return text, filtered_cards
 
     def create_message(self, text: str, role) -> Message:
-        logging.info(f"creating message for {role}")
+        start = time.time()
+        logger.info(f"creating message for {role}")
 
         card_names = self.card_vector_db.query(text)
+        checkpoint_vector_query = time.time()
+
         cards = [self.card_name_2_card.get(card_name) for card_name in card_names]
 
         processed_text, cards = self.replace_card_names_with_urls(
             text=text, cards=cards, role=role
         )
+        checkpoint_processed_text = time.time()
 
         message = Message(
             text=text, role=role, processed_text=processed_text, cards=cards
         )
-        logging.info(f"message created with cards: {' '.join([c.name for c in cards])}")
+        logger.info(f"message created with cards: {' '.join([c.name for c in cards])}")
+        checkpoint_end = time.time()
+        logger.debug(
+            f"query runtime: {checkpoint_vector_query-start:.2f}sec, text processing runtime: {checkpoint_processed_text-checkpoint_vector_query:.2f}sec, total runtime {checkpoint_end-start:.2f}sec"
+        )
         return message

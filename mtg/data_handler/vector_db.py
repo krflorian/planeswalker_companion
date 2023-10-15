@@ -1,22 +1,15 @@
-import os
-import yaml
-import logging
 import hnswlib
 import openai
 import numpy as np
 from tqdm import tqdm
 
 from mtg.objects import Card
+from mtg.utils import get_openai_api_key
+from mtg.utils.logging import get_logger
 
-try:
-    with open("config/config.yaml", "r") as infile:
-        config = yaml.load(infile, Loader=yaml.FullLoader)
-    openai.api_key = config.get("open_ai_token")
-    logging.info("loaded open ai token from config file ")
-except:
-    logging.warn("did not find config file")
-    openai.api_key = os.environ["open_ai_token"]
-    logging.info("loaded open ai token from environment")
+logger = get_logger(__name__)
+
+openai.api_key = get_openai_api_key()
 
 
 class VectorDB:
@@ -30,7 +23,7 @@ class VectorDB:
 
     def get_embeddings(self, cards: list[Card]) -> tuple[str, np.ndarray]:
         names_and_embeddings = []
-        print(f"adding {len(cards)} embeddings")
+        logger.info(f"Vector DB: adding {len(cards)} embeddings")
         for card in tqdm(cards):
             try:
                 response = openai.Embedding.create(
@@ -39,7 +32,9 @@ class VectorDB:
                 embeddings = response["data"][0]["embedding"]
                 names_and_embeddings.append((card.name, np.array(embeddings)))
             except:
-                print(f"downloaded {len(names_and_embeddings)} embeddings")
+                logger.info(
+                    f"Vector DB: downloaded {len(names_and_embeddings)} embeddings"
+                )
                 return names_and_embeddings
         return names_and_embeddings
 
@@ -91,7 +86,7 @@ class VectorDB:
                 ):
                     break
                 card_name = self.ids_2_card_name.get(label, None)
-                print(f"adding {card_name} - distance {distance}")
+                logger.debug(f"Vector DB: found {card_name} - distance {distance}")
                 card_names.add(card_name)
-
+        logger.debug(f"queried Vector DB {len(sentences)} times")
         return list(card_names)

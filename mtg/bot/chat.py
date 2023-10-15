@@ -1,7 +1,6 @@
 # %%
 import os
 import yaml
-import logging
 
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
@@ -14,16 +13,9 @@ from langchain.prompts import (
 from langchain.schema import SystemMessage
 from langchain.memory import ConversationTokenBufferMemory
 
-try:
-    with open("config/config.yaml", "r") as infile:
-        config = yaml.load(infile, Loader=yaml.FullLoader)
-    openai_api_key = config.get("open_ai_token")
-    logging.info("loaded open ai token from config file ")
-except:
-    logging.warn("did not find config file")
-    openai_api_key = os.environ["open_ai_token"]
-    logging.info("loaded open ai token from environment")
+from mtg.utils import get_openai_api_key
 
+openai_api_key = get_openai_api_key()
 
 SYSTEM_MESSAGE = """
 You are Nissa a Magic the Gathering Assistant, that explains rules, cards and gives advice on playstyles.
