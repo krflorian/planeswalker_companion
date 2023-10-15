@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+
 from mtg.objects import Message
 
 
@@ -8,6 +9,9 @@ class ChatHistory:
 
     def add_message(self, message: Message):
         self.chat.append(message)
+
+    def clear(self):
+        self.chat = []
 
     def get_card_data(self, number_of_messages=2, max_number_of_cards=4):
         """Get Card data from last n messages in text form."""
@@ -23,7 +27,7 @@ class ChatHistory:
             card_data = "No Card Data."
         return card_data
 
-    def get_human_readable_chat(self, number_of_messages=4):
+    def get_human_readable_chat(self, number_of_messages=4) -> list[list[str, str]]:
         """Create Chat for display in gradio bot.
 
         Chat has to be in format list of lists. First message in the list is user second is bot.
