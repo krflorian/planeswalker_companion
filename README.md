@@ -78,14 +78,18 @@ Submit a pull request.
 # Installation
 To install the bot, follow these steps:
 
-1. Clone the repository.  
+1. Clone the repository (make sure you have git-lfs installed)
 2. Install the required dependencies with poetry 
 ```shell 
 cd your/working/directory
 pip install --upgrade poetry 
 poetry install 
 ```
-3. Run the bot:
+3. create a config.yml file with your OpenAI API Key.
+```shell
+cp ./config/config_example.yaml ./config/config.yaml && nano ./config/config.yaml
+```
+4. Run the bot:
 ```shell 
 poetry shell 
 python app.py 
