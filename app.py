@@ -28,5 +28,5 @@ with gradio.Blocks() as ui:
     txt.submit(None, None, txt, _js="() => {''}")
     with gradio.Row():
         clear_btn = gradio.ClearButton([chatbot, txt])
-    clear_btn.click(magic_bot.clear_memory, None, None)
+    clear_btn.click(magic_bot.clear_memory)
 ui.launch()
