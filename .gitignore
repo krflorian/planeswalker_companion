@@ -165,4 +165,3 @@ tryhard.py
 .venv
 *.code-workspace
 .vscode 
-data/

@@ -14,7 +14,13 @@ BLOCKED_CARD_TYPES = ["Card", "Stickers", "Hero"]
 
 
 class CardDB:
-    def __init__(self, all_cards_file: Path) -> None:
+    def __init__(
+        self,
+        all_cards_file: Path,
+        vector_db_file: Path = Path(
+            "data/artifacts/card_vector_db.p",
+        ),
+    ) -> None:
         # read set data
         all_cards, all_sets = [], set()
 
@@ -57,16 +63,21 @@ class CardDB:
 
         # init card vector db
         try:
-            with open("data/artifacts/card_vector_db.p", "rb") as infile:
+            with vector_db_file.open("rb") as infile:
                 self.card_vector_db: VectorDB = pickle.load(infile)
             logger.info("loaded Card Vector DB from Filesystem")
         except:
             self.card_vector_db: VectorDB = VectorDB(cards=all_cards)
-        self.update_card_vector_db()
 
+        # update vector db
+        updated = self.update_card_vector_db()
+        if updated:
+            with vector_db_file.open("wb") as outfile:
+                pickle.dump(self.card_vector_db, outfile)
+            logger.info("Saved updated Vector DB")
         logger.info("Card Data Handler ready!")
 
-    def update_card_vector_db(self):
+    def update_card_vector_db(self) -> bool:
         cards_in_vector_db = list(self.card_vector_db.ids_2_card_name.values())
         missing_cards = [
             card
@@ -76,6 +87,8 @@ class CardDB:
         if missing_cards:
             names_and_embeddings = self.card_vector_db.get_embeddings(missing_cards)
             self.card_vector_db.add(names_and_embeddings)
+            return True
+        return False
 
     def replace_card_names_with_urls(self, text, cards, role="user") -> str:
         """Find Card Names in text and replace them with their URL. Return only Cards that are found in the text."""
