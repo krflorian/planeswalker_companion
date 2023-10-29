@@ -1,7 +1,4 @@
 # %%
-import os
-import yaml
-
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
 
