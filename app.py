@@ -8,8 +8,9 @@ from mtg.bot.chat_history import ChatHistory
 
 
 all_cards_file = Path("data/cards/scryfall_all_cards_with_rulings.json")
+vector_db_file = Path("data/artifacts/card_vector_db.p")
 
-card_db = CardDB(all_cards_file)
+card_db = CardDB(all_cards_file=all_cards_file, vector_db_file=vector_db_file)
 chat_history = ChatHistory()
 llm_chain = create_chat_model(
     model="gpt-3.5-turbo", temperature=1, max_token_limit=2000
