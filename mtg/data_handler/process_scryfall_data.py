@@ -1,42 +1,65 @@
 # %%
+# download bulk data
 import json
 from pathlib import Path
 import requests
-import logging
+import random
 from tqdm import tqdm
 
-all_cards_file = Path("data/raw/scryfall_all_cards.json")
-with all_cards_file.open("r", encoding="utf-8") as infile:
-    data = json.load(infile)
-
-idx_2_card_data = {card_data["id"]: card_data for card_data in data}
+cards_data_path = Path("data/cards")
 
 # %%
+# download info
 
-BLOCKED_CARD_TYPES = ["Card", "Stickers", "Hero"]
-for card_data in tqdm(data):
-    if (card_data["layout"] != "normal") or (
-        card_data["type_line"] in BLOCKED_CARD_TYPES
-    ):
-        continue
+lookup_url = "https://api.scryfall.com/bulk-data"
+bulk_requests_info = requests.get(lookup_url)
+bulk_requests_info = bulk_requests_info.json()
 
-    card_id = card_data.get("id", None)
-    url = f"https://api.scryfall.com/cards/{card_id}/rulings"
+# %%
+# download cards data
 
-    response = requests.get(url)
-    json_response = response.json()
-    if json_response.get("data", []) and (response.status_code != 404):
-        logging.debug(
-            f"adding {len(json_response['data'])} rulings for {card_data.get('name')}"
-        )
-        rulings = [ruling["comment"] for ruling in json_response["data"]]
-        idx_2_card_data[card_id]["rulings"] = rulings
+oracl_card_info = [
+    info for info in bulk_requests_info["data"] if info["type"] == "oracle_cards"
+][0]
+oracle_cards_url = oracl_card_info["download_uri"]
+oracle_card_data = requests.get(oracle_cards_url)
+oracle_card_data = oracle_card_data.json()
+
+
+# %%
+# download rulings
+
+rulings_info = [
+    info for info in bulk_requests_info["data"] if info["type"] == "rulings"
+][0]
+rulings_info_url = rulings_info["download_uri"]
+rulings_data = requests.get(rulings_info_url)
+rulings_data = rulings_data.json()
+
+
+# %%
+# combine
+
+idx_2_card_data = {card_data["oracle_id"]: card_data for card_data in oracle_card_data}
+
+for ruling in tqdm(rulings_data):
+    oracle_id = ruling["oracle_id"]
+    if "rulings" not in idx_2_card_data[oracle_id]:
+        idx_2_card_data[oracle_id]["rulings"] = []
+    idx_2_card_data[oracle_id]["rulings"].append(ruling["comment"])
 
 
 # %%
 # save all cards
-processed_data = list(idx_2_card_data.values())
-all_cards_file = Path("data/raw/scryfall_all_cards_with_rulings.json")
+BLOCKED_CARD_TYPES = ["Card", "Stickers", "Hero"]
+
+processed_data = [
+    card
+    for card in idx_2_card_data.values()
+    if (card["type_line"] not in BLOCKED_CARD_TYPES) and (card["layout"] == "normal")
+]
+print(f"saving cards data with {len(processed_data)} cards")
+all_cards_file = Path("data/cards/scryfall_all_cards_with_rulings.json")
 
 with all_cards_file.open("w", encoding="utf-8") as outfile:
     json.dump(processed_data, outfile)
@@ -44,9 +67,8 @@ with all_cards_file.open("w", encoding="utf-8") as outfile:
 
 # %%
 # save sample
-import random
 
-all_cards_sample_file = Path("data/raw/scryfall_all_cards_with_rulings_sample.json")
+all_cards_sample_file = Path("data/cards/scryfall_all_cards_with_rulings_sample.json")
 sample = random.choices(
     [card for card in processed_data if card.get("rulings", [])], k=10
 )
@@ -55,6 +77,10 @@ with all_cards_sample_file.open("w", encoding="utf-8") as outfile:
 
 # %%
 
-print(len([c for c in processed_data if c.get("rulings")]), "cards with rulings")
+print(
+    "there are ",
+    len([c for c in processed_data if c.get("rulings")]),
+    "cards with rulings",
+)
 
 # %%
