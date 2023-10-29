@@ -7,7 +7,7 @@ from mtg.bot.chat import create_chat_model
 from mtg.bot.chat_history import ChatHistory
 
 
-all_cards_file = Path("data/raw/scryfall_all_cards_with_rulings.json")
+all_cards_file = Path("data/cards/scryfall_all_cards_with_rulings.json")
 
 card_db = CardDB(all_cards_file)
 chat_history = ChatHistory()
