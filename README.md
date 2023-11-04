@@ -9,6 +9,7 @@ app_port: 7860
 base_path: /
 tags:
   - Magic the Gathering
+pinned: true
 ---
 
 
