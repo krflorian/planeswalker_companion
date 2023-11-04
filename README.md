@@ -2,7 +2,7 @@
 title: MTG Rulebot Nissa
 emoji: 🌵🌊🌬🔥🌍
 colorFrom: red
-colorTo: orange
+colorTo: yellow
 sdk: gradio
 app_file: app.py
 app_port: 7860
