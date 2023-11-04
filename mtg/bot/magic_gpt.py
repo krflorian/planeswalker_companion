@@ -20,6 +20,7 @@ class MagicGPT:
     def clear_memory(self):
         self.llm_chain.memory.clear()
         self.chat_history.clear()
+        logger.info("memory cleared")
 
     def ask(self, query):
         try:
