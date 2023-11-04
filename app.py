@@ -26,4 +26,7 @@ with gradio.Blocks() as ui:
         txt = gradio.Textbox(show_label=False, placeholder="Enter text and press enter")
     txt.submit(magic_bot.ask, txt, chatbot)
     txt.submit(None, None, txt, _js="() => {''}")
+    with gradio.Row():
+        clear_btn = gradio.ClearButton([chatbot, txt])
+    clear_btn.click(magic_bot.clear_memory)
 ui.launch()
