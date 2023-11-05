@@ -1,4 +1,3 @@
-import time
 from datetime import datetime, timedelta
 
 from langchain.chains import LLMChain
@@ -6,19 +5,37 @@ from langchain.chains import LLMChain
 from mtg.data_handler import CardDB
 from mtg.utils.logging import get_logger
 from .chat_history import ChatHistory
+from .lang_chain import create_chains
 
 logger = get_logger(__name__)
 
 
 class MagicGPT:
-    def __init__(self, llm_chain: LLMChain, card_db: CardDB, chat_history: ChatHistory):
-        self.llm_chain = llm_chain
-        self.card_db = card_db
-        self.chat_history = chat_history
-        self._last_updated = datetime.now()
+    def __init__(
+        self,
+        card_db: CardDB,
+        chat_history: ChatHistory,
+        model: str = "gpt-3.5-turbo",
+        temperature_deck_building: int = 0.7,
+        max_token_limit: int = 3000,
+        max_responses: int = 1,
+    ):
+        classifier_chain, deckbuilding_chat, rules_question_chat = create_chains(
+            model=model,
+            temperature_deck_building=temperature_deck_building,
+            max_token_limit=max_token_limit,
+            max_responses=max_responses,
+        )
+
+        self._last_updated: datetime = datetime.now()
+        self.chat_history: ChatHistory = chat_history
+        self.card_db: CardDB = card_db
+        self.classifier_chain: LLMChain = classifier_chain
+        self.deckbuilding_chat: LLMChain = deckbuilding_chat
+        self.rules_question_chat: LLMChain = rules_question_chat
 
     def clear_memory(self):
-        self.llm_chain.memory.clear()
+        self.rules_question_chat.memory.clear()
         self.chat_history.clear()
         logger.info("memory cleared")
 
@@ -42,16 +59,56 @@ class MagicGPT:
             self.clear_memory()
         self._last_updated = datetime.now()
 
-        # process query
-        message = self.card_db.create_message(query, role="user")
-        self.chat_history.add_message(message=message)
-        card_data = self.chat_history.get_card_data(
-            number_of_messages=2, max_number_of_cards=4
-        )
+        # branch
+        topic = self.classifier_chain.invoke(query)
+        logger.info(f"topic of the question is: {topic}")
+        # TODO make private functions for deckbuilding and rules question
+        # TODO clear memory when topic change?
+        if topic == "deck building":
+            logger.info("invoking deck building chat")
 
-        start = time.time()
-        response = self.llm_chain.predict(human_input=message.text, card_data=card_data)
-        logger.debug(f"runtime llm chain: {time.time()-start:.2f}sec")
+            # process query
+            message = self.card_db.create_message(
+                query,
+                role="user",
+                max_number_of_cards=10,
+                append_all_cards=True,
+                threshhold=0.4,
+            )
+            self.chat_history.add_message(message=message)
+
+            card_data = self.chat_history.get_card_data(
+                number_of_messages=1,
+                max_number_of_cards=10,
+                include_price=True,
+                include_rulings=False,
+            )
+
+            # invoke chat model
+            response = self.deckbuilding_chat.predict(
+                human_input=query, card_data=card_data
+            )
+        else:
+            logger.info("invoking rules question chat")
+
+            # process query
+            message = self.card_db.create_message(
+                query, role="user", max_number_of_cards=3, append_all_cards=False
+            )
+            self.chat_history.add_message(message=message)
+
+            card_data = self.chat_history.get_card_data(
+                number_of_messages=2,
+                max_number_of_cards=6,
+                include_price=False,
+                include_rulings=True,
+            )
+
+            # TODO query rules
+            # invoke chat model
+            response = self.rules_question_chat.predict(
+                human_input=query, card_data=card_data
+            )
 
         # process response
         message = self.card_db.create_message(response, role="assistant")

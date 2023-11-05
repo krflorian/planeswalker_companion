@@ -14,6 +14,7 @@ class Card:
     type: str
     oracle: str
     image_url: str
+    price: float
     power: int = 0
     toughness: int = 0
     color_identity: list[str] = field(default_factory=list)
@@ -35,7 +36,7 @@ class Card:
         self._image = card_image_file
         return card_image_file
 
-    def to_text(self):
+    def to_text(self, include_rulings: bool = True, include_price: bool = True):
         """parse card data to text format"""
         text = []
         text.append(self.name)
@@ -49,10 +50,13 @@ class Card:
             text.append("color identity: " + " ".join(self.color_identity))
         text.append(self.oracle)
 
+        # price
+        if include_price and self.price != 0.0:
+            text.append(f"price in EUR: {self.price}")
+
         # rulings
-        if self.rulings:
+        if include_rulings and self.rulings:
             text.append(f"Rulings for {self.name}: ")
             text.append("\n".join(self.rulings))
-        else:
-            text.append(f"There are no Rulings available for {self.name}")
+
         return "\n".join(text)

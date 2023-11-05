@@ -49,6 +49,7 @@ class CardDB:
                     power=card_data.get("power", 0),
                     toughness=card_data.get("toughness", 0),
                     oracle=card_data.get("oracle_text", ""),
+                    price=card_data.get("prices", {}).get("eur", 0.0),
                     color_identity=card_data.get("color_identity", []),
                     keywords=card_data.get("keywords", []),
                     image_url=card_data["image_uris"].get("large"),
@@ -120,20 +121,30 @@ class CardDB:
 
         return text, filtered_cards
 
-    def create_message(self, text: str, role) -> Message:
+    def create_message(
+        self,
+        text: str,
+        role: str,
+        max_number_of_cards: int = 3,
+        threshhold: float = 0.2,
+        append_all_cards: bool = False,
+    ) -> Message:
         start = time.time()
         logger.info(f"creating message for {role}")
 
-        card_names = self.card_vector_db.query(text)
+        card_names = self.card_vector_db.query(
+            text, k=max_number_of_cards, threshhold=threshhold
+        )
         checkpoint_vector_query = time.time()
 
-        cards = [self.card_name_2_card.get(card_name) for card_name in card_names]
+        all_cards = [self.card_name_2_card.get(card_name) for card_name in card_names]
 
-        processed_text, cards = self.replace_card_names_with_urls(
-            text=text, cards=cards, role=role
+        processed_text, matched_cards = self.replace_card_names_with_urls(
+            text=text, cards=all_cards, role=role
         )
         checkpoint_processed_text = time.time()
 
+        cards = all_cards if append_all_cards else matched_cards
         message = Message(
             text=text, role=role, processed_text=processed_text, cards=cards
         )
