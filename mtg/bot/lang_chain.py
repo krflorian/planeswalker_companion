@@ -1,6 +1,5 @@
 # %%
-import os
-import yaml
+from typing import Literal
 
 from langchain.chains import LLMChain
 from langchain.chat_models import ChatOpenAI
@@ -13,45 +12,93 @@ from langchain.prompts import (
 from langchain.schema import SystemMessage
 from langchain.memory import ConversationTokenBufferMemory
 
+from langchain.pydantic_v1 import BaseModel
+from langchain.output_parsers.openai_functions import PydanticAttrOutputFunctionsParser
+from langchain.utils.openai_functions import convert_pydantic_to_openai_function
+
 from mtg.utils import get_openai_api_key
 
 openai_api_key = get_openai_api_key()
 
-SYSTEM_MESSAGE = """
-You are Nissa a Magic the Gathering Assistant, that explains rules, cards and gives advice on playstyles.
-Do not answer questions unrelated to Magic the Gathering. If possible explain your answers with the rulings in context.
+
+DECKBUILDING_SYSTEM_MESSAGE = """
+You are Nissa a Magic the Gathering Assistant that helps with deckbuilding. Give your advice on which cards are best for the users deck.
+Let`s think step by step which cards are best for the users deck. Take the cards in context as suggestions and include them if they make sense in the deck.
+Only answer questions regarding Magic the Gathering.
 """
 
-HUMAN_PROMPT = """
+DECKBUILDING_PROMPT = """
 Card data: {card_data}
 
-Remember:  You are Nissa a Magic the Gathering Assistant, that explains rules, cards and gives advice on playstyles.
-For every user question first give a short summary of the answer, then, if possible explain your summary with the rulings and card data.
-Let`s think step by step how the ruling is relevant to the question.
-Do not answer questions unrelated to Magic the Gathering. Under no circumstances can you answer questions regarding Yu-Gi-Oh, Pokemon or other trading card games.
+Remember:  Do not answer questions unrelated to Magic the Gathering. Under no circumstances can you answer questions regarding Yu-Gi-Oh, Pokemon or other trading card games.
 
 {human_input}
 """
 
 
-def create_chat_model(
+RULES_QUESTION_SYSTEM_MESSAGE = """
+You are Nissa a Magic the Gathering Assistant, that explains the games rules.
+For every user question first give a short summary of the answer, then, if possible explain your summary with the rulings and card data.
+Let`s think step by step how the ruling is relevant to the question.
+Only answer questions regarding Magic the Gathering.
+"""
+
+# Rules data: {rules_data}
+# Card data: {card_data}
+
+RULES_QUESTION_PROMPT = """
+
+Remember: Do not answer questions unrelated to Magic the Gathering. Under no circumstances can you answer questions regarding Yu-Gi-Oh, Pokemon or other trading card games.
+
+{human_input}
+"""
+
+
+class TopicClassifier(BaseModel):
+    "You are a Magic the Gathering Assistant classify the topic of the user question"
+
+    topic: Literal["deck building", "rules question", "other"]
+    "The topic of the user question. The user can either ask about deck building advice or he has a question about a Magic the Gathering rule. Other questions include greetings and questions unrelated to Magic the gathering."
+
+
+def create_chains(
     model: str = "gpt-3.5-turbo",
-    temperature: int = 1,
+    temperature_deck_building: int = 0.7,
     max_token_limit: int = 3000,
     max_responses=1,
 ):
-    prompt = ChatPromptTemplate.from_messages(
+    """Create llm chains: Topic Classifier, Deckbuilding Chat, Rules Question Chat.
+    params:
+        model: gpt model version
+        temperature: how "creative" the answer should be (1 is deterministic, 0 is very creative)
+        max_token_limit: the maximum limit for number of tokens held in memory
+        max_responses: how many responses should be created for one question by the llm
+
+    returns:
+        Classifier Chain: takes text returns one of ["deck building", "rules question"]
+        Deckbuilding Chat: takes text and card data and returns text
+        Rules Question Chat: takes text, card data and rules data and returns text
+    """
+    deckbuilding_prompt = ChatPromptTemplate.from_messages(
         [
-            SystemMessage(content=SYSTEM_MESSAGE),
+            SystemMessage(content=DECKBUILDING_SYSTEM_MESSAGE),
             MessagesPlaceholder(variable_name="chat_history"),
-            HumanMessagePromptTemplate.from_template(HUMAN_PROMPT),
+            HumanMessagePromptTemplate.from_template(DECKBUILDING_PROMPT),
+        ]
+    )
+
+    rules_question_prompt = ChatPromptTemplate.from_messages(
+        [
+            SystemMessage(content=RULES_QUESTION_SYSTEM_MESSAGE),
+            MessagesPlaceholder(variable_name="chat_history"),
+            HumanMessagePromptTemplate.from_template(RULES_QUESTION_PROMPT),
         ]
     )
 
     llm = ChatOpenAI(
         openai_api_key=openai_api_key,
         model=model,
-        temperature=temperature,
+        temperature=1,
         n=max_responses,
     )
 
@@ -64,106 +111,35 @@ def create_chat_model(
         max_token_limit=max_token_limit,
     )
 
-    chat_llm_chain = LLMChain(
+    rules_question_chat = LLMChain(
         llm=llm,
-        prompt=prompt,
+        prompt=rules_question_prompt,
         verbose=True,
         memory=memory,
     )
 
-    return chat_llm_chain
+    llm = ChatOpenAI(
+        openai_api_key=openai_api_key,
+        model=model,
+        temperature=temperature_deck_building,
+        n=max_responses,
+    )
+    deckbuilding_chat = LLMChain(
+        llm=llm,
+        prompt=deckbuilding_prompt,
+        verbose=True,
+        memory=memory,
+    )
 
+    # classifier
+    classifier_function = convert_pydantic_to_openai_function(TopicClassifier)
+    classifier = ChatOpenAI(openai_api_key=openai_api_key, model=model).bind(
+        functions=[classifier_function], function_call={"name": "TopicClassifier"}
+    )
+    parser = PydanticAttrOutputFunctionsParser(
+        pydantic_schema=TopicClassifier, attr_name="topic"
+    )
+    classifier_chain = classifier | parser
+    print("created all chains...")
 
-# %%
-from langchain.chat_models import ChatOpenAI
-from langchain.schema.output_parser import StrOutputParser
-from langchain.schema.runnable import RunnableBranch
-from langchain.prompts import PromptTemplate
-
-GENERAL_PROMPT = """
-You are Nissa a Magic the Gathering Assistant, that explains rules and gives deckbuilding advice.
-{human_input}
-"""
-
-DECKBUILDING_PROMPT = """
-Card data: {card_data}
-
-Remember:  You are Nissa a Magic the Gathering Assistant that helps with deckbuilding. Give your advice on which cards are best for the users deck.
-Let`s think step by step which cards from the card data in context are best for the users deck.
-Do not answer questions unrelated to Magic the Gathering. Under no circumstances can you answer questions regarding Yu-Gi-Oh, Pokemon or other trading card games.
-
-{human_input}
-"""
-
-RULES_QUESTION_PROMPT = """
-Card data: {card_data}
-
-Rules data: {rules_data}
-
-Remember:  You are Nissa a Magic the Gathering Assistant, that explains rules.
-For every user question first give a short summary of the answer, then, if possible explain your summary with the rulings and card data.
-Let`s think step by step how the ruling is relevant to the question.
-Do not answer questions unrelated to Magic the Gathering. Under no circumstances can you answer questions regarding Yu-Gi-Oh, Pokemon or other trading card games.
-
-{human_input}
-"""
-
-
-general_prompt = PromptTemplate.from_template(GENERAL_PROMPT)
-deckbuilding_prompt = PromptTemplate.from_template(DECKBUILDING_PROMPT)
-rules_question_prompt = PromptTemplate.from_template(RULES_QUESTION_PROMPT)
-
-prompt_branch = RunnableBranch(
-    (lambda x: x["topic"] == "deck building", deckbuilding_prompt),
-    (lambda x: x["topic"] == "rules question", rules_question_prompt),
-    general_prompt,
-)
-
-
-prompt_branch
-
-# %%
-
-
-from typing import Literal
-
-from langchain.pydantic_v1 import BaseModel
-from langchain.output_parsers.openai_functions import PydanticAttrOutputFunctionsParser
-from langchain.utils.openai_functions import convert_pydantic_to_openai_function
-
-
-class TopicClassifier(BaseModel):
-    "Classify the topic of the user question"
-
-    topic: Literal["deck building", "rules question"]
-    "The topic of the user question. The user can either ask about deck building advice or he has a question about a Magic the Gathering rule."
-
-
-openai_api_key = "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"
-classifier_function = convert_pydantic_to_openai_function(TopicClassifier)
-llm = ChatOpenAI(openai_api_key=openai_api_key, model="gpt-3.5-turbo").bind(
-    functions=[classifier_function], function_call={"name": "TopicClassifier"}
-)
-parser = PydanticAttrOutputFunctionsParser(
-    pydantic_schema=TopicClassifier, attr_name="topic"
-)
-classifier_chain = llm | parser
-
-# %%
-
-question = "Tell me 3 cards for my chatterfang commander deck"
-question = "what happens if i attack with a 5/5 creature with trample and my opponent blocks with a 5/1 creature?"
-
-classifier_chain.invoke(question)
-
-
-# %%
-"""
-chain = create_chat_model(max_responses=3, temperature=0.7)
-
-response = chain.generate(
-    input_list=[
-        {"human_input": "hi!, how are you", "card_data": "", "chat_history": []}
-    ]
-)
-"""
+    return classifier_chain, deckbuilding_chat, rules_question_chat

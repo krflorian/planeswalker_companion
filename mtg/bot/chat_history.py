@@ -13,7 +13,13 @@ class ChatHistory:
     def clear(self):
         self.chat = []
 
-    def get_card_data(self, number_of_messages=2, max_number_of_cards=4):
+    def get_card_data(
+        self,
+        number_of_messages=2,
+        max_number_of_cards=4,
+        include_price: bool = False,
+        include_rulings: bool = False,
+    ):
         """Get Card data from last n messages in text form."""
         card_data = ""
         cards = []
@@ -21,7 +27,12 @@ class ChatHistory:
             cards.extend(message.cards)
 
         card_data += "\n".join(
-            [card.to_text() for card in cards[-max_number_of_cards:]]
+            [
+                card.to_text(
+                    include_price=include_price, include_rulings=include_rulings
+                )
+                for card in cards[-max_number_of_cards:]
+            ]
         )
         if card_data == "":
             card_data = "No Card Data."
