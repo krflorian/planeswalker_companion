@@ -6,7 +6,6 @@ from mtg.data_handler import CardDB
 from mtg.bot.chat import create_chat_model
 from mtg.bot.chat_history import ChatHistory
 
-
 all_cards_file = Path("data/cards/scryfall_all_cards_with_rulings.json")
 vector_db_file = Path("data/artifacts/card_vector_db.p")
 
@@ -26,5 +25,8 @@ with gradio.Blocks() as ui:
     with gradio.Row():
         txt = gradio.Textbox(show_label=False, placeholder="Enter text and press enter")
     txt.submit(magic_bot.ask, txt, chatbot)
-    txt.submit(None, None, txt, _js="() => {''}")
+    # txt.submit(None, None, txt, _js="() => {''}")
+    with gradio.Row():
+        clear_btn = gradio.ClearButton([chatbot, txt], value="Start new Conversation")
+    clear_btn.click(magic_bot.clear_memory)
 ui.launch()
