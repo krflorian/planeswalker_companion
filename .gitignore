@@ -160,8 +160,10 @@ cython_debug/
 #.idea/
 
 # project specific 
-config/*
+config.yaml
 tryhard.py
 .venv
 *.code-workspace
 .vscode 
+reddit/
+rules/
