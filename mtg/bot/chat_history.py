@@ -26,7 +26,7 @@ class ChatHistory:
         for message in self.chat[-number_of_messages:]:
             cards.extend(message.cards)
 
-        card_data += "\n".join(
+        card_data += "\n\n".join(
             [
                 card.to_text(
                     include_price=include_price, include_rulings=include_rulings
