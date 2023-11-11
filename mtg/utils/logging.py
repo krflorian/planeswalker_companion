@@ -29,6 +29,7 @@ def get_logger(name="mtg-bot"):
     # logger
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
+    logger.propagate = False
 
     # file handler
     file_handler = logging.FileHandler("chat_logs.log", mode="a")

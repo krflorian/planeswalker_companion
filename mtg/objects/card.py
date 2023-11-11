@@ -51,8 +51,9 @@ class Card:
         text.append(self.oracle)
 
         # price
-        if include_price and self.price != 0.0:
-            text.append(f"price in EUR: {self.price}")
+        if include_price:
+            if self.price != 0.0:
+                text.append(f"price in EUR: {self.price}")
 
         # rulings
         if include_rulings and self.rulings:

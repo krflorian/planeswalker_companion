@@ -62,56 +62,67 @@ class MagicGPT:
         # branch
         topic = self.classifier_chain.invoke(query)
         logger.info(f"topic of the question is: {topic}")
-        # TODO make private functions for deckbuilding and rules question
+
         # TODO clear memory when topic change?
         if topic == "deck building":
-            logger.info("invoking deck building chat")
-
-            # process query
-            message = self.card_db.create_message(
-                query,
-                role="user",
-                max_number_of_cards=10,
-                append_all_cards=True,
-                threshhold=0.4,
-            )
-            self.chat_history.add_message(message=message)
-
-            card_data = self.chat_history.get_card_data(
-                number_of_messages=1,
-                max_number_of_cards=10,
-                include_price=True,
-                include_rulings=False,
-            )
-
-            # invoke chat model
-            response = self.deckbuilding_chat.predict(
-                human_input=query, card_data=card_data
-            )
+            response = self._ask_deckbuilding_question(query)
         else:
-            logger.info("invoking rules question chat")
-
-            # process query
-            message = self.card_db.create_message(
-                query, role="user", max_number_of_cards=3, append_all_cards=False
-            )
-            self.chat_history.add_message(message=message)
-
-            card_data = self.chat_history.get_card_data(
-                number_of_messages=2,
-                max_number_of_cards=6,
-                include_price=False,
-                include_rulings=True,
-            )
-
-            # TODO query rules
-            # invoke chat model
-            response = self.rules_question_chat.predict(
-                human_input=query, card_data=card_data
-            )
+            response = self._ask_rules_question(query)
 
         # process response
         message = self.card_db.create_message(response, role="assistant")
         self.chat_history.add_message(message=message)
 
         return self.chat_history.get_human_readable_chat(number_of_messages=6)
+
+    def _ask_deckbuilding_question(self, query) -> str:
+        logger.info("invoking deck building chat")
+
+        # process query
+        message = self.card_db.create_message(
+            query,
+            role="user",
+            max_number_of_cards=5,
+            threshhold=0.2,
+        )
+
+        message = self.card_db.add_additional_cards(
+            message=message, max_number_of_cards=10, threshhold=0.4
+        )
+        self.chat_history.add_message(message=message)
+
+        card_data = self.chat_history.get_card_data(
+            number_of_messages=1,
+            max_number_of_cards=10,
+            include_price=True,
+            include_rulings=False,
+        )
+
+        # invoke chat model
+        response = self.deckbuilding_chat.predict(
+            human_input=query, card_data=card_data
+        )
+
+        return response
+
+    def _ask_rules_question(self, query):
+        logger.info("invoking rules question chat")
+
+        # process query
+        message = self.card_db.create_message(query, role="user", max_number_of_cards=3)
+        self.chat_history.add_message(message=message)
+
+        card_data = self.chat_history.get_card_data(
+            number_of_messages=2,
+            max_number_of_cards=6,
+            include_price=False,
+            include_rulings=True,
+        )
+
+        # TODO query rules
+        # invoke chat model
+        response = self.rules_question_chat.predict(
+            human_input=query, card_data=card_data
+        )
+
+        return response

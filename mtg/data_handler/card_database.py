@@ -125,9 +125,8 @@ class CardDB:
         self,
         text: str,
         role: str,
-        max_number_of_cards: int = 3,
+        max_number_of_cards: int = 5,
         threshhold: float = 0.2,
-        append_all_cards: bool = False,
     ) -> Message:
         start = time.time()
         logger.info(f"creating message for {role}")
@@ -144,15 +143,41 @@ class CardDB:
         )
         checkpoint_processed_text = time.time()
 
-        cards = all_cards if append_all_cards else matched_cards
         message = Message(
-            text=text, role=role, processed_text=processed_text, cards=cards
+            text=text, role=role, processed_text=processed_text, cards=matched_cards
         )
         logger.info(
-            f"message created with {len(cards)} cards: {' '.join([str(c) for c in cards])}"
+            f"message created with {len(matched_cards)} cards: {' '.join([str(c) for c in matched_cards])}"
         )
         checkpoint_end = time.time()
         logger.debug(
             f"query runtime: {checkpoint_vector_query-start:.2f}sec, text processing runtime: {checkpoint_processed_text-checkpoint_vector_query:.2f}sec, total runtime {checkpoint_end-start:.2f}sec"
         )
+        return message
+
+    def add_additional_cards(
+        self,
+        message: Message,
+        max_number_of_cards: int = 5,
+        threshhold: float = 0.4,
+    ) -> Message:
+        matched_card_names = []
+        for card in message.cards:
+            matched_card_names.extend(
+                self.card_vector_db.query(
+                    card.to_text(include_rulings=False, include_price=False),
+                    k=max_number_of_cards,
+                    threshhold=threshhold,
+                )
+            )
+
+        additional_cards = [
+            self.card_name_2_card.get(card_name) for card_name in matched_card_names
+        ]
+
+        message.cards.extend(additional_cards)
+        logger.info(
+            f"added {len(additional_cards)} additional cards: {' '.join([str(c) for c in matched_card_names])}"
+        )
+
         return message
