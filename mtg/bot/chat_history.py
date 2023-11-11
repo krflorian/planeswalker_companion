@@ -23,7 +23,7 @@ class ChatHistory:
         """Get Card data from last n messages in text form."""
         card_data = ""
         cards = []
-        for message in self.chat[-number_of_messages:]:
+        for message in reversed(self.chat[-number_of_messages:]):
             cards.extend(message.cards)
 
         card_data += "\n\n".join(
@@ -31,7 +31,7 @@ class ChatHistory:
                 card.to_text(
                     include_price=include_price, include_rulings=include_rulings
                 )
-                for card in cards[-max_number_of_cards:]
+                for card in cards[:max_number_of_cards]
             ]
         )
         if card_data == "":
