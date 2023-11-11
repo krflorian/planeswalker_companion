@@ -39,7 +39,7 @@ class MagicGPT:
         self.chat_history.clear()
         logger.info("memory cleared")
 
-    def ask(self, query):
+    def ask(self, query: str):
         try:
             chat = self._ask(query)
             return chat
@@ -73,7 +73,9 @@ class MagicGPT:
         message = self.card_db.create_message(response, role="assistant")
         self.chat_history.add_message(message=message)
 
-        return self.chat_history.get_human_readable_chat(number_of_messages=6)
+        return self.chat_history.get_human_readable_chat(
+            number_of_messages=6
+        )  # TODO new version of gradio only needs a text not a list of messages
 
     def _ask_deckbuilding_question(self, query) -> str:
         logger.info("invoking deck building chat")

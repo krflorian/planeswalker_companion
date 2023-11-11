@@ -6,6 +6,7 @@
 - create graphic for bot and data flow and add to readme
 
 # takes time
+- FEATURE: add streaming to gradio to reduce waiting time: https://www.gradio.app/guides/creating-a-chatbot-fast#a-streaming-example-using-openai
 - FEATURE: separate rules questions from deck building questions via langchain agents
     - for deckbuilding: fine tune vector search
         - maybe add similarity to cards in question rather than similarity to question itself?
