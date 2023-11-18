@@ -70,7 +70,11 @@ class MagicGPT:
             response = self._ask_rules_question(query)
 
         # process response
-        message = self.card_db.create_message(response, role="assistant")
+        message = self.card_db.create_message(
+            response,
+            role="assistant",
+            max_number_of_cards=10,
+        )
         self.chat_history.add_message(message=message)
 
         return self.chat_history.get_human_readable_chat(
@@ -84,12 +88,14 @@ class MagicGPT:
         message = self.card_db.create_message(
             query,
             role="user",
-            max_number_of_cards=5,
-            threshhold=0.2,
+            max_number_of_cards=2,
+            threshold=0.2,
         )
 
         message = self.card_db.add_additional_cards(
-            message=message, max_number_of_cards=10, threshhold=0.4
+            message=message,
+            max_number_of_cards=10,
+            threshold=0.5,
         )
         self.chat_history.add_message(message=message)
 
@@ -111,7 +117,7 @@ class MagicGPT:
         logger.info("invoking rules question chat")
 
         # process query
-        message = self.card_db.create_message(query, role="user", max_number_of_cards=3)
+        message = self.card_db.create_message(query, role="user", max_number_of_cards=2)
         self.chat_history.add_message(message=message)
 
         card_data = self.chat_history.get_card_data(

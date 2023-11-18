@@ -79,11 +79,11 @@ class CardDB:
         logger.info("Card Data Handler ready!")
 
     def update_card_vector_db(self) -> bool:
-        cards_in_vector_db = list(self.card_vector_db.ids_2_card_name.values())
+        card_names_in_vector_db = list(self.card_vector_db.ids_2_labels.values())
         missing_cards = [
             card
             for card_name, card in self.card_name_2_card.items()
-            if card_name not in cards_in_vector_db
+            if card_name not in card_names_in_vector_db
         ]
         if missing_cards:
             names_and_embeddings = self.card_vector_db.get_embeddings(missing_cards)
@@ -126,17 +126,20 @@ class CardDB:
         text: str,
         role: str,
         max_number_of_cards: int = 5,
-        threshhold: float = 0.2,
+        threshold: float = 0.2,
     ) -> Message:
         start = time.time()
         logger.info(f"creating message for {role}")
 
-        card_names = self.card_vector_db.query(
-            text, k=max_number_of_cards, threshhold=threshhold
+        query_results = self.card_vector_db.query(
+            text, k=max_number_of_cards, threshold=threshold
         )
         checkpoint_vector_query = time.time()
 
-        all_cards = [self.card_name_2_card.get(card_name) for card_name in card_names]
+        all_cards = [
+            self.card_name_2_card.get(card_name)
+            for (card_name, distance) in query_results
+        ]
 
         processed_text, matched_cards = self.replace_card_names_with_urls(
             text=text, cards=all_cards, role=role
@@ -159,25 +162,31 @@ class CardDB:
         self,
         message: Message,
         max_number_of_cards: int = 5,
-        threshhold: float = 0.4,
+        threshold: float = 0.4,
     ) -> Message:
-        matched_card_names = []
+        query_results: list[tuple[str, float]] = []
         for card in message.cards:
-            matched_card_names.extend(
+            query_results.extend(
                 self.card_vector_db.query(
                     card.to_text(include_rulings=False, include_price=False),
-                    k=max_number_of_cards,
-                    threshhold=threshhold,
+                    k=max_number_of_cards,  # TODO: could be more
+                    threshold=threshold,
+                    lasso_threshold=0.3,
                 )
             )
-
+        card_names = self.card_vector_db.sample_results(
+            query_results, k=max_number_of_cards
+        )
         additional_cards = [
-            self.card_name_2_card.get(card_name) for card_name in matched_card_names
+            self.card_name_2_card.get(card_name) for card_name in card_names
         ]
 
-        message.cards.extend(additional_cards)
+        for card in additional_cards:
+            if card not in message.cards:
+                message.cards.append(card)
+
         logger.info(
-            f"added {len(additional_cards)} additional cards: {' '.join([str(c) for c in matched_card_names])}"
+            f"added {len(additional_cards)} additional cards: {' '.join([str(c) for c in card_names])}"
         )
 
         return message
