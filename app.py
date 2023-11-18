@@ -13,7 +13,7 @@ chat_history = ChatHistory()
 magic_bot = MagicGPT(
     card_db=card_db,
     chat_history=chat_history,
-    model="gpt-3.5-turbo",
+    model="gpt-4-1106-preview",
     temperature_deck_building=0.7,
     max_token_limit=2000,
 )
