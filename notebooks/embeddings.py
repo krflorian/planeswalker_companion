@@ -1,38 +1,43 @@
 # %%
 from pathlib import Path
 from mtg.data_handler import CardDB
-
-all_cards_file = Path("data/raw/scryfall_all_cards_with_rulings.json")
-db = CardDB(all_cards_file)
-
-
-# %%
-
-text = "can i untap land cap when i have a counter on it?"
-text = "what happens if i attack with a 1/1 deathouch creature and my opponent blocks with a 2/2 token?"
-text = "how many cards named frodo can i put into my deck?"
-text = "can i put frodo adventurous hobbit and frodo determined hero in the same deck?"
-text = "what cards can i add to my chatterfang commander deck?"
-
-message = db.create_message(text, role="user")
-message.cards
-
-# %%
-
-print(message.processed_text)
-
-# %%
+from mtg.data_handler.vector_db import VectorDB
 import pickle
+import numpy as np
 
-with open("data/artifacts/card_db.p", "wb") as outfile:
-    pickle.dump(db, outfile)
+vector_db_file = Path("data/artifacts/card_vector_db.p")
+
 
 # %%
 
-import random
+with vector_db_file.open("rb") as infile:
+    card_vector_db = pickle.load(infile)
 
-cards = [card for card in all_cards if "chatterfang" in card.name.lower()]
-cards.extend([card for card in all_cards if "land cap" in card.name.lower()])
-cards.extend([card for card in all_cards if "frodo" in card.name.lower()])
-cards.extend(random.choices(all_cards, k=10))
-all_cards = cards
+# %%
+
+labels_and_embeddings = []
+for idx, card_name in card_vector_db.ids_2_labels.items():
+    embedding = card_vector_db.graph.get_items([idx])
+    embedding = np.array(embedding[0])
+    labels_and_embeddings.append((card_name, embedding))
+
+labels_and_embeddings[17]
+# %%
+
+vector_db = VectorDB([])
+vector_db.create_graph(labels_and_embeddings=labels_and_embeddings)
+vector_db.query("what cards add to my chatterfang deck?", threshold=0.3)
+
+# %%
+
+with vector_db_file.open("wb") as outfile:
+    pickle.dump(vector_db, outfile)
+
+# %%
+
+with vector_db_file.open("rb") as infile:
+    card_vector_db = pickle.load(infile)
+
+# %%
+
+card_vector_db.query("what cards add to my chatterfang deck?", k=10, threshold=0.5)

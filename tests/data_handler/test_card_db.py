@@ -1,40 +1,66 @@
 import pytest
+from pathlib import Path
+
 from mtg.data_handler import CardDB
 
-db = CardDB("tests/data/cards.json")
+
+@pytest.fixture(scope="module")
+def card_db() -> CardDB:
+    all_cards_file = Path("data/cards/scryfall_all_cards_with_rulings.json")
+    vector_db_file = Path("data/artifacts/card_vector_db.p")
+    card_db = CardDB(all_cards_file=all_cards_file, vector_db_file=vector_db_file)
+    return card_db
 
 
-CARD_EXTRACTION_TESTCASES = [
-    ("What Cards can I add to my Chatterfang Deck?", ["Chatterfang, Squirrel General"]),
+QUERY_TESTCASES = [
     (
-        "What Cards can I add to my Schnatterfang, Squirrel General Deck?",
-        ["Chatterfang, Squirrel General"],
+        """For a Chatterfang, Squirrel General deck, you would want to focus on cards that synergize well with Chatterfang's token-generating ability and its colors, black and green (B/G). Here are three suggestions:
+
+    Deep Forest Hermit - This is a creature that creates Squirrel tokens when it enters the battlefield. It's a green card that fits into Chatterfang’s color identity and synergizes with its ability to double token creation.
+
+    Doubling Season - This is a powerful enchantment that doubles the number of tokens and counters you create. It works incredibly well with Chatterfang's ability to create additional Squirrel tokens.
+
+    Pitiless Plunderer - A creature that can generate additional resources when your creatures die. Since Chatterfang has an ability that requires sacrificing Squirrels, this can provide you with valuable ramp and fixing.
+
+    These cards would all support the token and sacrifice themes in a Chatterfang deck, providing you with both an army of creatures and the resources to utilize Chatterfang's abilities to their fullest. Remember to adjust the deck to your playstyle and the rest of your deck's strategy.""",
+        [
+            "Chatterfang, Squirrel General",
+            "Deep Forest Hermit",
+            "Doubling Season",
+            "Pitiless Plunderer",
+        ],
     ),
     (
-        "I'm thinking of making a life drain deck. Nekusar sounds promising but how effective can he be in a 4man pod? What about 1v1?",
-        ["Nekusar, the Mindrazer"],
+        """Tell me 3 cards for my chatterfang commander deck.""",
+        [
+            "Chatterfang, Squirrel General",
+        ],
     ),
     (
-        "If they were to make a blue version similar to Moonshaker Calvary and Craterhoof Behemeth what other evasive ability do you think would work best? I mean, they could just give it flying again and that'd be cool, but besides that and trample.",
-        ["Moonshaker Cavalry", "Craterhoof Behemoth"],
+        """Tell me 3 cards for my locust god commander deck.""",
+        [
+            "The Locust God",
+        ],
     ),
     (
-        "My brother-in-law took this deck apart because it got hated out of every game we played. It was crazy strong, but in a pod, it'd get targeted early, and he'd be a spectator relatively quick. On the flip side, it really taught me the importance of running plenty of interaction",
-        [],
+        """When you attack with Aggressive Mammoth, which is an 8/8 creature with trample, and your opponent blocks it with a 1/1 creature, combat damage is assigned as follows:
+        First, you must assign lethal damage to all blockers. In this case, the 1/1 creature blocking the Aggressive Mammoth will be assigned 1 damage, because that is enough to destroy the 1/1 creature (since it is considered lethal damage to a creature with only 1 toughness).
+        Then, because Aggressive Mammoth has trample, any remaining damage can be assigned to the defending player or planeswalker that the Mammoth was attacking. Since the Mammoth has 8 power and you are assigning 1 damage to the blocker, the remaining 7 damage goes through to the player or planeswalker.
+        Thus, the 1/1 creature would be destroyed, your opponent would take 7 damage, and the Aggressive Mammoth would survive the combat (assuming no other effects, abilities, or damage prevention methods are applied).""",
+        ["Aggressive Mammoth"],
     ),
-    (
-        "For example, if you pass a list or a dict as a parameter value, and the test case code mutates it, the mutations will be reflected in subsequent test case calls.",
-        [],
-    ),
-    ("What is the best flying commander?", []),
 ]
 
 
-@pytest.mark.parametrize("text,expected_card_names", CARD_EXTRACTION_TESTCASES)
-def test_card_db(text: str, expected_card_names: list[str]):
-    doc = db.process_text(text)
-    cards = db.extract_card_data_from_doc(doc)
+@pytest.mark.parametrize("query,expected_card_names", QUERY_TESTCASES)
+def test_card_db_extracts_cards(card_db: CardDB, query, expected_card_names):
+    # act
+    message = card_db.create_message(
+        query,
+        role="assistant",
+        max_number_of_cards=10,
+        threshold=0.5,
+    )
 
-    assert len(cards) == len(expected_card_names)
-    for card in cards:
-        assert card.name in expected_card_names
+    # assert
+    assert all([card.name in expected_card_names for card in message.cards])

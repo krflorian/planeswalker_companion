@@ -38,7 +38,7 @@ def get_logger(name="mtg-bot"):
 
     # create console handler with a higher log level
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.DEBUG)
+    console_handler.setLevel(logging.INFO)
     console_handler.setFormatter(CustomFormatter())
 
     # add handlers
