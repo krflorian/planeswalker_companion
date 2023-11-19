@@ -1,4 +1,17 @@
 import pytest
+from pathlib import Path
+import pickle
+from mtg.data_handler.vector_db import VectorDB
+
+
+@pytest.fixture(scope="module")
+def card_vector_db() -> VectorDB:
+    vector_db_file = Path("data/artifacts/card_vector_db.p")
+
+    with vector_db_file.open("rb") as infile:
+        card_vector_db: VectorDB = pickle.load(infile)
+    return card_vector_db
+
 
 QUERY_TESTCASES = [
     ("What Cards can i add to my chatterfang deck?", "Chatterfang, Squirrel General"),

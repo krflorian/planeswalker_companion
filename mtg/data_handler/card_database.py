@@ -68,7 +68,15 @@ class CardDB:
                 self.card_vector_db: VectorDB = pickle.load(infile)
             logger.info("loaded Card Vector DB from Filesystem")
         except:
-            self.card_vector_db: VectorDB = VectorDB(cards=all_cards)
+            self.card_vector_db: VectorDB = VectorDB(
+                labels_and_texts=[
+                    (
+                        card.name,
+                        card.to_text(include_price=False, include_rulings=False),
+                    )
+                    for card in self.card_name_2_card.values()
+                ]
+            )
 
         # update vector db
         updated = self.update_card_vector_db()
@@ -134,6 +142,7 @@ class CardDB:
         query_results = self.card_vector_db.query(
             text, k=max_number_of_cards, threshold=threshold
         )
+        print(query_results)
         checkpoint_vector_query = time.time()
 
         all_cards = [
@@ -166,14 +175,21 @@ class CardDB:
     ) -> Message:
         query_results: list[tuple[str, float]] = []
         for card in message.cards:
-            query_results.extend(
-                self.card_vector_db.query(
-                    card.to_text(include_rulings=False, include_price=False),
-                    k=max_number_of_cards,  # TODO: could be more
-                    threshold=threshold,
-                    lasso_threshold=0.3,
-                )
+            # for each card in message get max_number_of_cards
+            names_and_distances = self.card_vector_db.query(
+                card.to_text(include_rulings=False, include_price=False),
+                k=max_number_of_cards,  # TODO: could be more
+                threshold=threshold,
+                lasso_threshold=0.3,
             )
+            query_results.extend(
+                [
+                    (name, distance)
+                    for name, distance in names_and_distances
+                    if name != card.name
+                ]
+            )
+
         card_names = self.card_vector_db.sample_results(
             query_results, k=max_number_of_cards
         )

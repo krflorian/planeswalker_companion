@@ -71,9 +71,7 @@ class MagicGPT:
 
         # process response
         message = self.card_db.create_message(
-            response,
-            role="assistant",
-            max_number_of_cards=10,
+            response, role="assistant", max_number_of_cards=10, threshold=0.4
         )
         self.chat_history.add_message(message=message)
 
@@ -89,7 +87,7 @@ class MagicGPT:
             query,
             role="user",
             max_number_of_cards=2,
-            threshold=0.2,
+            threshold=0.5,
         )
 
         message = self.card_db.add_additional_cards(
@@ -101,7 +99,7 @@ class MagicGPT:
 
         card_data = self.chat_history.get_card_data(
             number_of_messages=1,
-            max_number_of_cards=10,
+            max_number_of_cards=12,
             include_price=True,
             include_rulings=False,
         )

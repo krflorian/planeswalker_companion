@@ -10,6 +10,7 @@ vector_db_file = Path("data/artifacts/card_vector_db.p")
 
 card_db = CardDB(all_cards_file=all_cards_file, vector_db_file=vector_db_file)
 chat_history = ChatHistory()
+
 magic_bot = MagicGPT(
     card_db=card_db,
     chat_history=chat_history,
@@ -18,7 +19,7 @@ magic_bot = MagicGPT(
     max_token_limit=2000,
 )
 
-gradio.ChatInterface
+# gradio.ChatInterface
 
 # creates a new Blocks app and assigns it to the variable demo.
 with gradio.Blocks() as ui:

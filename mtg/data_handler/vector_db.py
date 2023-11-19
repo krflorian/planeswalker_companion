@@ -107,22 +107,16 @@ class VectorDB:
         for sentence in sentences:
             embedding = self.vectorize_text(sentence)
             idxs, distances = self.graph.knn_query(embedding, k=k)
-            search_results.extend(
-                [
-                    (self.ids_2_labels.get(idx, None), distance)
-                    for (idx, distance) in zip(idxs[0], distances[0])
-                ]
-            )
 
-        search_results = sorted(search_results, key=lambda x: x[1])
-        baseline_distance = search_results[0][1]
-        search_results = [
-            (label, distance)
-            for (label, distance) in search_results
-            if (distance - baseline_distance < lasso_threshold)
-            and (distance < threshold)
-        ][:k]
+            baseline_distance = distances[0][0]
+            for idx, distance in zip(idxs[0], distances[0]):
+                if (distance - baseline_distance < lasso_threshold) and (
+                    distance < threshold
+                ):
+                    search_results.append((self.ids_2_labels.get(idx, None), distance))
 
+        search_results = sorted(search_results, key=lambda x: x[1])[:k]
+        print(search_results)
         return search_results
 
     def vectorize_text(self, text: str) -> np.ndarray:
@@ -133,9 +127,13 @@ class VectorDB:
 
     def sample_results(self, search_results: tuple[str, float], k: 5) -> list[str]:
         """Create a random sample of the results weighted with their distance to the search query."""
+
+        if not search_results:
+            return []
+
         k = min(k, len(search_results))
         weights = [result[1] for result in search_results]
-        normalized_weights = np.array(weights) / np.sum(weights)
+        normalized_weights = normalize_weights(weights)
 
         return list(
             np.random.choice(
@@ -145,3 +143,14 @@ class VectorDB:
                 p=normalized_weights,
             )
         )
+
+
+def normalize_weights(weights):
+    normalized_weights = np.array(weights) / np.sum(weights)
+
+    # Check if the sum is exactly 1
+    if not np.isclose(np.sum(normalized_weights), 1.0):
+        # Adjust the last element to make the sum exactly 1
+        normalized_weights[-1] += 1.0 - np.sum(normalized_weights)
+
+    return normalized_weights

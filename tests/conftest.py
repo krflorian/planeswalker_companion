@@ -4,17 +4,7 @@ import json
 
 from pathlib import Path
 
-from mtg.data_handler.vector_db import VectorDB
 from mtg.objects import Card
-
-
-@pytest.fixture(scope="session")
-def card_vector_db() -> VectorDB:
-    vector_db_file = Path("data/artifacts/card_vector_db.p")
-
-    with vector_db_file.open("rb") as infile:
-        card_vector_db: VectorDB = pickle.load(infile)
-    return card_vector_db
 
 
 @pytest.fixture(scope="session")
