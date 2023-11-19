@@ -19,8 +19,6 @@ magic_bot = MagicGPT(
     max_token_limit=2000,
 )
 
-# gradio.ChatInterface
-
 # creates a new Blocks app and assigns it to the variable demo.
 with gradio.Blocks() as ui:
     # creates a new Chatbot instance and assigns it to the variable chatbot.
