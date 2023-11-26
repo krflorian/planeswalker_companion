@@ -66,7 +66,7 @@ def test_card_db_extracts_cards(card_db: CardDB, query, expected_card_names):
     # act
     message = card_db.create_message(
         query,
-        role="assistant",
+        role="user",
         max_number_of_cards=10,
         threshold=0.5,
         lasso_threshold=0.03,
