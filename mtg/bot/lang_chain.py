@@ -63,7 +63,7 @@ class TopicClassifier(BaseModel):
 
 
 def create_chains(
-    model: str = "gpt-3.5-turbo",
+    model: str = "gpt-4-1106-preview",
     temperature_deck_building: int = 0.7,
     max_token_limit: int = 3000,
     max_responses=1,
