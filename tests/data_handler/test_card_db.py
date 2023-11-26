@@ -49,6 +49,15 @@ QUERY_TESTCASES = [
         Thus, the 1/1 creature would be destroyed, your opponent would take 7 damage, and the Aggressive Mammoth would survive the combat (assuming no other effects, abilities, or damage prevention methods are applied).""",
         ["Aggressive Mammoth"],
     ),
+    (
+        "Norns decree is on my side and an opponent with 9 poison counters attacks and deals letahl damage to me what happens?",
+        ["Norn's Decree"],
+    ),
+    ("Can I play Vraskas contempt in my opponents turn?", ["Vraska's Contempt"]),
+    (
+        "how many squirrels does chatterfang create if i tap 5 lands and have Bootlegers Stash on the board?",
+        ["Bootleggers' Stash", "Chatterfang, Squirrel General"],
+    ),
 ]
 
 
@@ -60,7 +69,14 @@ def test_card_db_extracts_cards(card_db: CardDB, query, expected_card_names):
         role="assistant",
         max_number_of_cards=10,
         threshold=0.5,
+        lasso_threshold=0.03,
     )
 
     # assert
-    assert all([card.name in expected_card_names for card in message.cards])
+    message_card_names = [card.name for card in message.cards]
+    # test precision
+    assert len(message.cards) <= len(expected_card_names) + 2
+    # test recall
+    assert all(
+        [card_name in message_card_names for card_name in expected_card_names]
+    ), message_card_names

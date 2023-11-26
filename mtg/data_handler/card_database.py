@@ -135,14 +135,17 @@ class CardDB:
         role: str,
         max_number_of_cards: int = 5,
         threshold: float = 0.2,
+        lasso_threshold: float = 0.03,
     ) -> Message:
         start = time.time()
         logger.info(f"creating message for {role}")
 
         query_results = self.card_vector_db.query(
-            text, k=max_number_of_cards, threshold=threshold
+            text,
+            k=max_number_of_cards,
+            threshold=threshold,
+            lasso_threshold=lasso_threshold,
         )
-        print(query_results)
         checkpoint_vector_query = time.time()
 
         all_cards = [
@@ -171,7 +174,8 @@ class CardDB:
         self,
         message: Message,
         max_number_of_cards: int = 5,
-        threshold: float = 0.4,
+        threshold: float = 0.5,
+        lasso_threshold: float = 0.03,
     ) -> Message:
         query_results: list[tuple[str, float]] = []
         for card in message.cards:
@@ -180,7 +184,7 @@ class CardDB:
                 card.to_text(include_rulings=False, include_price=False),
                 k=max_number_of_cards,  # TODO: could be more
                 threshold=threshold,
-                lasso_threshold=0.3,
+                lasso_threshold=lasso_threshold,
             )
             query_results.extend(
                 [

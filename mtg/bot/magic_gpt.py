@@ -88,12 +88,11 @@ class MagicGPT:
             role="user",
             max_number_of_cards=2,
             threshold=0.5,
+            lasso_threshold=0.03,
         )
 
         message = self.card_db.add_additional_cards(
-            message=message,
-            max_number_of_cards=10,
-            threshold=0.5,
+            message=message, max_number_of_cards=10, threshold=0.5, lasso_threshold=0.03
         )
         self.chat_history.add_message(message=message)
 
@@ -115,7 +114,13 @@ class MagicGPT:
         logger.info("invoking rules question chat")
 
         # process query
-        message = self.card_db.create_message(query, role="user", max_number_of_cards=2)
+        message = self.card_db.create_message(
+            query,
+            role="user",
+            max_number_of_cards=2,
+            threshold=0.5,
+            lasso_threshold=0.03,
+        )
         self.chat_history.add_message(message=message)
 
         card_data = self.chat_history.get_card_data(

@@ -35,7 +35,7 @@ def load_spacy_model(cards: list[str]):
     """loads new spacy model"""
     # load model
     nlp = spacy.blank("en")
-    matcher = FuzzyMatcher(nlp.vocab, fuzzy_func="quick", min_r1=93, min_r2=93)
+    matcher = FuzzyMatcher(nlp.vocab, fuzzy_func="quick", min_r1=80, min_r2=80)
 
     # set up matcher
     print("setting up matcher...")
@@ -73,7 +73,7 @@ def load_spacy_model(cards: list[str]):
 
 def match_cards(text, cards):
     nlp = spacy.blank("en")
-    matcher = FuzzyMatcher(nlp.vocab, fuzzy_func="quick", min_r1=90, min_r2=90)
+    matcher = FuzzyMatcher(nlp.vocab, fuzzy_func="quick", min_r1=80, min_r2=80)
 
     # add cards to matcher
     docs = nlp.pipe([card.name for card in cards])
