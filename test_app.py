@@ -1,9 +1,20 @@
 import gradio
+import time
 
 
-def ask(query):
+def ask(history: list[list[str, str]]):
     print("asked something")
-    return [[query, "asdfasdf"]]
+    time.sleep(2)
+    response = "this is the response"
+    history[-1][1] = ""
+    for token in response.split(" "):
+        history[-1][1] += token + " "
+        time.sleep(1)
+        yield history
+
+
+def user(user_message, history):
+    return "", history + [[user_message, None]]
 
 
 def clear_memory():
@@ -12,7 +23,7 @@ def clear_memory():
 
 gradio.ChatInterface
 # creates a new Blocks app and assigns it to the variable demo.
-with gradio.Blocks() as ui:
+with gradio.Blocks() as demo:
     # creates a new Chatbot instance and assigns it to the variable chatbot.
     chatbot = gradio.Chatbot()
     with gradio.Row():
@@ -22,12 +33,16 @@ with gradio.Blocks() as ui:
         submit_btn = gradio.Button(value="Submit", variant="primary", scale=1)
 
     clear_btn = gradio.ClearButton([chatbot, txt], value="Start new Conversation")
-    txt.submit(ask, txt, chatbot)
-    txt.submit(lambda x: "", txt, txt)
 
-    clear_btn.click(clear_memory)
-    submit_btn.click(ask, inputs=[txt], outputs=[chatbot])
+    txt.submit(user, [txt, chatbot], [txt, chatbot], queue=False).then(
+        ask, chatbot, chatbot
+    )
+    # txt.submit(lambda x: "", txt, txt)
+
+    clear_btn.click(clear_memory, queue=False)
+    submit_btn.click(ask, inputs=[txt], outputs=[chatbot], queue=False)
     submit_btn.click(lambda x: "", [txt], [txt])
 
 
-ui.launch()
+demo.queue()
+demo.launch()
