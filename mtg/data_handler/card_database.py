@@ -25,7 +25,7 @@ class CardDB:
         all_cards, all_sets = [], set()
 
         # create cache
-        Path(".cache/").mkdir(exist_ok=True, parents=True)
+        Path("data/.cache/").mkdir(exist_ok=True, parents=True)
 
         # load card data
         if isinstance(all_cards_file, str):

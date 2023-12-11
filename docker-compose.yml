@@ -1,10 +1,4 @@
 services:
   app:
     build: .
-    image: maximilianpichler/planeswalker_companion:latest
-    container_name: nissa
-    ports:
-      - "7860:7860"
-    volumes:
-      - ./data:/app/data
-      - ./config:/app/data
+    image:  docker.io/maximilianpichler/planeswalker_companion:latest
