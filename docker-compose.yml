@@ -1,15 +1,10 @@
 services:
   app:
     build: .
+    image: maximilianpichler/planeswalker_companion:latest
     container_name: nissa
     ports:
       - "7860:7860"
     volumes:
-      - .:/app
-  fileserver:
-    image: nginx
-    container_name: fileserver
-    ports:
-        - 8000:80
-    volumes:
-        - ./data:/usr/share/nginx/html
+      - ./data:/app/data
+      - ./config:/app/data
