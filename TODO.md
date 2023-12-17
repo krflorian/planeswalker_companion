@@ -4,6 +4,8 @@
 - add double sided cards to card database 
 - update scryfall card data + rulings automatically at start of application (data_handler/process_scryfall_data.py)
 - create graphic for bot and data flow and add to readme
+- add "get data" function, that fetches data folder from a file server
+- setup ci/cd pipeline
 
 # takes time
 - FEATURE: add streaming to gradio to reduce waiting time: https://www.gradio.app/guides/creating-a-chatbot-fast#a-streaming-example-using-openai
