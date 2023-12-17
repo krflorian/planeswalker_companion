@@ -177,6 +177,9 @@ class CardDB:
         )
         return message
 
+    def create_minimal_message(self, text: str, role: str) -> Message:
+        return Message(text=text, role=role, processed_text=text)
+
     def add_additional_cards(
         self,
         message: Message,

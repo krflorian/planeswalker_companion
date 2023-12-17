@@ -20,7 +20,12 @@ class MagicGPT:
         max_token_limit: int = 3000,
         max_responses: int = 1,
     ):
-        classifier_chain, deckbuilding_chat, rules_question_chat = create_chains(
+        (
+            classifier_chain,
+            deckbuilding_chat,
+            rules_question_chat,
+            memory,
+        ) = create_chains(
             model=model,
             temperature_deck_building=temperature_deck_building,
             max_token_limit=max_token_limit,
@@ -29,6 +34,7 @@ class MagicGPT:
 
         self._last_updated: datetime = datetime.now()
         self.chat_history: ChatHistory = chat_history
+        self.memory = memory
         self.card_db: CardDB = card_db
         self.classifier_chain: LLMChain = classifier_chain
         self.deckbuilding_chat: LLMChain = deckbuilding_chat
@@ -36,7 +42,7 @@ class MagicGPT:
         self.conversation_topic: str = None  # TODO should be ENUM
 
     def clear_memory(self):
-        self.rules_question_chat.memory.clear()
+        self.memory.clear()
         self.chat_history.clear()
         logger.info("memory cleared")
 
@@ -56,33 +62,52 @@ class MagicGPT:
 
     def ask(self):
         try:
-            query = self.chat_history.chat[-1].text
-            chat = self._ask(query)
-            return chat
+            if self.conversation_topic == "deck building":
+                response_iterator = self._ask_deckbuilding_question()
+            else:
+                response_iterator = self._ask_rules_question()
+
+            for response in response_iterator:
+                message = self.card_db.create_minimal_message(
+                    text=response, role="assistant"
+                )
+                if self.chat_history.chat[-1].role == "user":
+                    self.chat_history.chat.append(message)
+                else:
+                    self.chat_history.chat[-1] = message
+                chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
+                yield chat
+
+            # create final message
+            message = self.card_db.create_message(
+                response, role="assistant", max_number_of_cards=10, threshold=0.4
+            )
+            self.chat_history.chat[-1] = message
+            final_chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
+
+            # save memory
+            if self.conversation_topic == "deck building":
+                self.memory.save_context(
+                    inputs={"human_input": self.chat_history.chat[-2].text},
+                    outputs={"assistant": self.chat_history.chat[-1].text},
+                )
+            else:
+                self.memory.save_context(
+                    inputs={"human_input": self.chat_history.chat[-2].text},
+                    outputs={"assistant": self.chat_history.chat[-1].text},
+                )
+
+            yield final_chat
+
         except Exception as e:
             logger.error(e)
             self.clear_memory()
-            return [
+            yield [
                 [
                     self.chat_history.chat[-1].text,
                     f"Something went wrong, I am restarting. Please ask the question again.",
                 ]
             ]
-
-    def _ask(self, query):
-        # branch
-        if self.conversation_topic == "deck building":
-            response = self._ask_deckbuilding_question()
-        else:
-            response = self._ask_rules_question()
-
-        # process response
-        message = self.card_db.create_message(
-            response, role="assistant", max_number_of_cards=10, threshold=0.4
-        )
-        self.chat_history.add_message(message=message)
-
-        return self.chat_history.get_human_readable_chat(number_of_messages=6)
 
     def _process_deckbuilding_question(self, query) -> list[list[str, str]]:
         logger.info("processing deck building query")
@@ -112,12 +137,12 @@ class MagicGPT:
             include_rulings=False,
         )
 
-        # invoke chat model
-        response = self.deckbuilding_chat.predict(
-            human_input=self.chat_history.chat[-1].text, card_data=card_data
-        )
-
-        return response
+        partial_message = ""
+        for response in self.rules_question_chat.stream(
+            {"human_input": self.chat_history.chat[-1].text, "card_data": card_data}
+        ):
+            partial_message += response.content
+            yield partial_message
 
     def _process_rules_question(self, query) -> list[list[str, str]]:
         logger.info("processing rules question")
@@ -144,10 +169,10 @@ class MagicGPT:
             include_rulings=True,
         )
 
-        # TODO query rules
-        # invoke chat model
-        response = self.rules_question_chat.predict(
-            human_input=self.chat_history.chat[-1].text, card_data=card_data
-        )
-
-        return response
+        # TODO add rules data
+        partial_message = ""
+        for response in self.rules_question_chat.stream(
+            {"human_input": self.chat_history.chat[-1].text, "card_data": card_data}
+        ):
+            partial_message += response.content
+            yield partial_message
