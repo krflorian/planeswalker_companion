@@ -56,5 +56,6 @@ class ChatHistory:
                     chat[-1].append(message.processed_text)
 
         if len(chat[-1]) == 1:
+            # no assistant message
             chat[-1].append(None)
         return chat

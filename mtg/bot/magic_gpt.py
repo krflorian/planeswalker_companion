@@ -33,14 +33,30 @@ class MagicGPT:
         self.classifier_chain: LLMChain = classifier_chain
         self.deckbuilding_chat: LLMChain = deckbuilding_chat
         self.rules_question_chat: LLMChain = rules_question_chat
+        self.conversation_topic: str = None  # TODO should be ENUM
 
     def clear_memory(self):
         self.rules_question_chat.memory.clear()
         self.chat_history.clear()
         logger.info("memory cleared")
 
-    def ask(self, query: str):
+    def process_user_query(self, query):
+        # branch
+        topic = self.classifier_chain.invoke(query)
+        logger.info(f"topic of the question is: {topic}")
+
+        self.conversation_topic = topic
+
+        if topic == "deck building":
+            chat = self._process_deckbuilding_question(query)
+        else:
+            chat = self._process_rules_question(query)
+
+        return chat
+
+    def ask(self):
         try:
+            query = self.chat_history.chat[-1].text
             chat = self._ask(query)
             return chat
         except Exception as e:
@@ -48,26 +64,17 @@ class MagicGPT:
             self.clear_memory()
             return [
                 [
-                    query,
+                    self.chat_history.chat[-1].text,
                     f"Something went wrong, I am restarting. Please ask the question again.",
                 ]
             ]
 
     def _ask(self, query):
-        # no user system yet so clear memory after every hour
-        if datetime.now() - self._last_updated > timedelta(hours=1):
-            self.clear_memory()
-        self._last_updated = datetime.now()
-
         # branch
-        topic = self.classifier_chain.invoke(query)
-        logger.info(f"topic of the question is: {topic}")
-
-        # TODO clear memory when topic change?
-        if topic == "deck building":
-            response = self._ask_deckbuilding_question(query)
+        if self.conversation_topic == "deck building":
+            response = self._ask_deckbuilding_question()
         else:
-            response = self._ask_rules_question(query)
+            response = self._ask_rules_question()
 
         # process response
         message = self.card_db.create_message(
@@ -75,14 +82,11 @@ class MagicGPT:
         )
         self.chat_history.add_message(message=message)
 
-        return self.chat_history.get_human_readable_chat(
-            number_of_messages=6
-        )  # TODO new version of gradio only needs a text not a list of messages
+        return self.chat_history.get_human_readable_chat(number_of_messages=6)
 
-    def _ask_deckbuilding_question(self, query) -> str:
-        logger.info("invoking deck building chat")
+    def _process_deckbuilding_question(self, query) -> list[list[str, str]]:
+        logger.info("processing deck building query")
 
-        # process query
         message = self.card_db.create_message(
             query,
             role="user",
@@ -96,6 +100,11 @@ class MagicGPT:
         )
         self.chat_history.add_message(message=message)
 
+        return self.chat_history.get_human_readable_chat(number_of_messages=6)
+
+    def _ask_deckbuilding_question(self) -> str:
+        logger.info("invoking deck building chain")
+
         card_data = self.chat_history.get_card_data(
             number_of_messages=1,
             max_number_of_cards=12,
@@ -105,13 +114,13 @@ class MagicGPT:
 
         # invoke chat model
         response = self.deckbuilding_chat.predict(
-            human_input=query, card_data=card_data
+            human_input=self.chat_history.chat[-1].text, card_data=card_data
         )
 
         return response
 
-    def _ask_rules_question(self, query):
-        logger.info("invoking rules question chat")
+    def _process_rules_question(self, query) -> list[list[str, str]]:
+        logger.info("processing rules question")
 
         # process query
         message = self.card_db.create_message(
@@ -123,6 +132,11 @@ class MagicGPT:
         )
         self.chat_history.add_message(message=message)
 
+        return self.chat_history.get_human_readable_chat(number_of_messages=6)
+
+    def _ask_rules_question(self):
+        logger.info("invoking rules chain")
+
         card_data = self.chat_history.get_card_data(
             number_of_messages=2,
             max_number_of_cards=6,
@@ -133,7 +147,7 @@ class MagicGPT:
         # TODO query rules
         # invoke chat model
         response = self.rules_question_chat.predict(
-            human_input=query, card_data=card_data
+            human_input=self.chat_history.chat[-1].text, card_data=card_data
         )
 
         return response

@@ -94,7 +94,14 @@ class CardDB:
             if card_name not in card_names_in_vector_db
         ]
         if missing_cards:
-            names_and_embeddings = self.card_vector_db.get_embeddings(missing_cards)
+            labels_and_texts = [
+                (
+                    card.name,
+                    card.to_text(include_price=False, include_rulings=False),
+                )
+                for card in missing_cards
+            ]
+            names_and_embeddings = self.card_vector_db.get_embeddings(labels_and_texts)
             self.card_vector_db.add(names_and_embeddings)
             return True
         return False
