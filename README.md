@@ -11,7 +11,7 @@ tags:
   - Magic the Gathering
 pinned: true
 ---
-
+  
 
 # MTG Rule Bot "Nissa"
 
