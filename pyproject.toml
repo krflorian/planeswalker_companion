@@ -21,7 +21,7 @@ black = "^23.7.0"
 tqdm = "^4.66.1"
 spacy-lookups-data = "^1.0.5"
 hnswlib = "^0.7.0"
-langchain = "^0.0.314"
+langchain = "^0.0.350"
 tiktoken = "^0.5.1"
 
 [tool.poetry.group.dev.dependencies]

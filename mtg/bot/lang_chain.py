@@ -15,6 +15,8 @@ from langchain.memory import ConversationTokenBufferMemory
 from langchain.pydantic_v1 import BaseModel
 from langchain.output_parsers.openai_functions import PydanticAttrOutputFunctionsParser
 from langchain.utils.openai_functions import convert_pydantic_to_openai_function
+from langchain.schema.runnable import RunnableLambda, RunnablePassthrough
+from operator import itemgetter
 
 from mtg.utils import get_openai_api_key
 
@@ -83,7 +85,7 @@ def create_chains(
     deckbuilding_prompt = ChatPromptTemplate.from_messages(
         [
             SystemMessage(content=DECKBUILDING_SYSTEM_MESSAGE),
-            MessagesPlaceholder(variable_name="chat_history"),
+            MessagesPlaceholder(variable_name="history"),
             HumanMessagePromptTemplate.from_template(DECKBUILDING_PROMPT),
         ]
     )
@@ -91,45 +93,50 @@ def create_chains(
     rules_question_prompt = ChatPromptTemplate.from_messages(
         [
             SystemMessage(content=RULES_QUESTION_SYSTEM_MESSAGE),
-            MessagesPlaceholder(variable_name="chat_history"),
+            MessagesPlaceholder(variable_name="history"),
             HumanMessagePromptTemplate.from_template(RULES_QUESTION_PROMPT),
         ]
     )
 
-    llm = ChatOpenAI(
+    rules_llm = ChatOpenAI(
         openai_api_key=openai_api_key,
         model=model,
         temperature=1,
         n=max_responses,
+        verbose=True,
     )
 
     memory = ConversationTokenBufferMemory(
-        llm=llm,
-        memory_key="chat_history",
+        llm=rules_llm,
+        memory_key="history",
         input_key="human_input",
         return_messages=True,
         ai_prefix="Nissa",
         max_token_limit=max_token_limit,
     )
 
-    rules_question_chat = LLMChain(
-        llm=llm,
-        prompt=rules_question_prompt,
-        verbose=True,
-        memory=memory,
+    rules_question_chat = (
+        RunnablePassthrough.assign(
+            history=RunnableLambda(memory.load_memory_variables) | itemgetter("history")
+        )
+        | rules_question_prompt
+        | rules_llm
     )
 
-    llm = ChatOpenAI(
+    deck_llm = ChatOpenAI(
         openai_api_key=openai_api_key,
         model=model,
         temperature=temperature_deck_building,
         n=max_responses,
-    )
-    deckbuilding_chat = LLMChain(
-        llm=llm,
-        prompt=deckbuilding_prompt,
         verbose=True,
-        memory=memory,
+    )
+
+    deckbuilding_chat = (
+        RunnablePassthrough.assign(
+            history=RunnableLambda(memory.load_memory_variables) | itemgetter("history")
+        )
+        | deckbuilding_prompt
+        | deck_llm
     )
 
     # classifier
@@ -143,4 +150,4 @@ def create_chains(
     classifier_chain = classifier | parser
     print("created all chains...")
 
-    return classifier_chain, deckbuilding_chat, rules_question_chat
+    return classifier_chain, deckbuilding_chat, rules_question_chat, memory
