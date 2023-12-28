@@ -1,13 +1,8 @@
-from dataclasses import dataclass, field
 from pathlib import Path
-import urllib
+from pydantic import BaseModel, Field
 
 
-CACHE_PATH = Path(".cache/")
-
-
-@dataclass
-class Card:
+class Card(BaseModel):
     _id: str
     name: str
     mana_cost: str
@@ -15,26 +10,15 @@ class Card:
     oracle: str
     image_url: str
     price: float
-    power: int = 0
-    toughness: int = 0
-    color_identity: list[str] = field(default_factory=list)
-    keywords: list[str] = field(default_factory=list)
-    rulings: list[str] = field(default_factory=list)
+    power: str = "0"
+    toughness: str = "0"
+    color_identity: list[str] = Field(default_factory=list)
+    keywords: list[str] = Field(default_factory=list)
+    rulings: list[str] = Field(default_factory=list)
     _image: Path = None
 
     def __repr__(self) -> str:
         return f"Card({self.name})"
-
-    @property
-    def image(self):
-        if self._image:
-            return self._image
-        # TODO not allways download check first if id is file
-        print(f"downloading image for {self.name}")
-        card_image_file = CACHE_PATH / f"{self._id}.png"
-        urllib.request.urlretrieve(self.image_url, card_image_file)
-        self._image = card_image_file
-        return card_image_file
 
     def to_text(self, include_rulings: bool = True, include_price: bool = True):
         """parse card data to text format"""
