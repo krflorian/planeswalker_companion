@@ -46,10 +46,10 @@ Let`s think step by step how the ruling in context is relevant to the question. 
 Only answer questions regarding Magic the Gathering.
 """
 
-# TODO add Rules data: {rules_data}
-
 RULES_QUESTION_PROMPT = """
 Card data: {card_data}
+
+Rules: {rules_data}
 
 Remember: Do not answer questions unrelated to Magic the Gathering. Under no circumstances can you answer questions regarding Yu-Gi-Oh, Pokemon or other trading card games.
 

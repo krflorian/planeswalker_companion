@@ -1,10 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from langchain.chains import LLMChain
 
-from mtg.data_handler import CardDB
 from mtg.utils.logging import get_logger
-from .chat_history import ChatHistory
+from mtg.history import ChatHistory
 from .lang_chain import create_chains
 
 logger = get_logger(__name__)
@@ -13,7 +12,6 @@ logger = get_logger(__name__)
 class MagicGPT:
     def __init__(
         self,
-        card_db: CardDB,
         chat_history: ChatHistory,
         model: str = "gpt-3.5-turbo",
         temperature_deck_building: int = 0.7,
@@ -35,7 +33,6 @@ class MagicGPT:
         self._last_updated: datetime = datetime.now()
         self.chat_history: ChatHistory = chat_history
         self.memory = memory
-        self.card_db: CardDB = card_db
         self.classifier_chain: LLMChain = classifier_chain
         self.deckbuilding_chat: LLMChain = deckbuilding_chat
         self.rules_question_chat: LLMChain = rules_question_chat
@@ -68,7 +65,7 @@ class MagicGPT:
                 response_iterator = self._ask_rules_question()
 
             for response in response_iterator:
-                message = self.card_db.create_minimal_message(
+                message = self.chat_history.create_minimal_message(
                     text=response, role="assistant"
                 )
                 if self.chat_history.chat[-1].role == "user":
@@ -79,8 +76,10 @@ class MagicGPT:
                 yield chat
 
             # create final message
-            message = self.card_db.create_message(
-                response, role="assistant", max_number_of_cards=10, threshold=0.4
+            message = self.chat_history.create_message(
+                response,
+                role="assistant",
+                include_rules=False,
             )
             self.chat_history.chat[-1] = message
             final_chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
@@ -112,15 +111,11 @@ class MagicGPT:
     def _process_deckbuilding_question(self, query) -> list[list[str, str]]:
         logger.info("processing deck building query")
 
-        message = self.card_db.create_message(
-            query,
-            role="user",
-            max_number_of_cards=2,
-            threshold=0.5,
-            lasso_threshold=0.03,
+        message = self.chat_history.create_message(
+            query, role="user", include_rules=False
         )
 
-        message = self.card_db.add_additional_cards(
+        message = self.chat_history.add_additional_cards(
             message=message, max_number_of_cards=10, threshold=0.5, lasso_threshold=0.03
         )
         self.chat_history.add_message(message=message)
@@ -138,7 +133,7 @@ class MagicGPT:
         )
 
         partial_message = ""
-        for response in self.rules_question_chat.stream(
+        for response in self.deckbuilding_chat.stream(
             {"human_input": self.chat_history.chat[-1].text, "card_data": card_data}
         ):
             partial_message += response.content
@@ -148,12 +143,8 @@ class MagicGPT:
         logger.info("processing rules question")
 
         # process query
-        message = self.card_db.create_message(
-            query,
-            role="user",
-            max_number_of_cards=2,
-            threshold=0.5,
-            lasso_threshold=0.03,
+        message = self.chat_history.create_message(
+            query, role="user", include_rules=True
         )
         self.chat_history.add_message(message=message)
 
@@ -168,11 +159,16 @@ class MagicGPT:
             include_price=False,
             include_rulings=True,
         )
+        rules_data = self.chat_history.get_rules()
 
         # TODO add rules data
         partial_message = ""
         for response in self.rules_question_chat.stream(
-            {"human_input": self.chat_history.chat[-1].text, "card_data": card_data}
+            {
+                "human_input": self.chat_history.chat[-1].text,
+                "card_data": card_data,
+                "rules_data": rules_data,
+            }
         ):
             partial_message += response.content
             yield partial_message

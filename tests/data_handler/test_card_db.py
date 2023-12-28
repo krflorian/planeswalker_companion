@@ -1,8 +1,6 @@
 import pytest
 from pathlib import Path
 
-from mtg.data_handler import CardDB
-
 
 @pytest.fixture(scope="module")
 def card_db() -> CardDB:
@@ -67,9 +65,6 @@ def test_card_db_extracts_cards(card_db: CardDB, query, expected_card_names):
     message = card_db.create_message(
         query,
         role="user",
-        max_number_of_cards=10,
-        threshold=0.5,
-        lasso_threshold=0.03,
     )
 
     # assert

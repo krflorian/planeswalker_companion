@@ -1,7 +1,7 @@
 import pytest
 from pathlib import Path
 import pickle
-from mtg.data_handler.vector_db import VectorDB
+from mtg.messages.vector_db import VectorDB
 
 
 @pytest.fixture(scope="module")

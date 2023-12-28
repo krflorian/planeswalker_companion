@@ -1,14 +1,9 @@
 import gradio
-from pathlib import Path
 
 from mtg.bot import MagicGPT
-from mtg.data_handler import CardDB
-from mtg.bot.chat_history import ChatHistory
+from mtg.history.chat_history import ChatHistory
 
-all_cards_file = Path("data/cards/scryfall_all_cards_with_rulings.json")
-vector_db_file = Path("data/artifacts/card_vector_db.p")
-
-card_db = CardDB(all_cards_file=all_cards_file, vector_db_file=vector_db_file)
+MODEL_NAME = "gpt-4-1106-preview"
 
 
 def update_user_message(user_message, magic_bot: MagicGPT):
@@ -38,9 +33,8 @@ with gradio.Blocks() as ui:
     chat = gradio.Chatbot()
     magic_bot = gradio.State(
         MagicGPT(
-            card_db=card_db,
             chat_history=ChatHistory(),
-            model="gpt-4-1106-preview",
+            model=MODEL_NAME,
             temperature_deck_building=0.7,
             max_token_limit=2000,
         )
