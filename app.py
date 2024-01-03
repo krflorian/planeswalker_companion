@@ -29,7 +29,13 @@ def clear_memory(magic_bot):
 
 # creates a new Blocks app and assigns it to the variable demo.
 with gradio.Blocks() as ui:
-    # creates a new Chatbot instance and assigns it to the variable chatbot.
+    gradio.Markdown(
+        """
+    # Hi, I'm Nissa! 
+    I can help you with all kinds of questions regarding Magic the Gathering rules or help you with brewing a new deck.
+    """
+    )
+    # chat
     chat = gradio.Chatbot()
     magic_bot = gradio.State(
         MagicGPT(
@@ -40,12 +46,21 @@ with gradio.Blocks() as ui:
         )
     )
     user_message = gradio.State("")
+    # textbox
     with gradio.Row():
         txt = gradio.Textbox(
             show_label=False, placeholder="Enter text and press enter", scale=7
         )
         submit_btn = gradio.Button(value="Submit", variant="primary", scale=1)
 
+    # clear button
+    clear_btn = gradio.ClearButton([chat, txt], value="Start new Conversation")
+
+    gradio.Markdown(
+        """
+    Support Nissa on [Patreon](patreon.com/NissaPlaneswalkerCompanion)
+    """
+    )
     # submit text
     txt.submit(
         update_textbox, inputs=[txt, user_message], outputs=[txt, user_message]
@@ -71,6 +86,5 @@ with gradio.Blocks() as ui:
     )
 
     # clear button
-    clear_btn = gradio.ClearButton([chat, txt], value="Start new Conversation")
     clear_btn.click(clear_memory, inputs=[magic_bot])
 ui.launch()
