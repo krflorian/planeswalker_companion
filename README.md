@@ -16,10 +16,10 @@ Here are some examples of questions that the bot can answer correctly:
 
 ## Rules Questions: 
 
-<u>User</u>:  
+<u><b>User</b></u>:  
 What happens if i attack with [Ambush Viper](https://cards.scryfall.io/large/front/0/e/0e386888-57f5-4eb6-88e8-5679bb8eb290.jpg?1608910517) and my opponent blocks with [Goblin Striker](https://cards.scryfall.io/large/front/f/7/f7654d8a-7013-4311-b29e-b55aaa1bf502.jpg?1562163499)?  
 
-<u>Nissa</u>:  
+<u><b>Nissa</b></u>:  
 If you attack with [Ambush Viper](https://cards.scryfall.io/large/front/0/e/0e386888-57f5-4eb6-88e8-5679bb8eb290.jpg?1608910517) and your opponent blocks with [Goblin Striker](https://cards.scryfall.io/large/front/f/7/f7654d8a-7013-4311-b29e-b55aaa1bf502.jpg?1562163499), the following will happen:  
     1. During the declare blockers step, your opponent declares [Goblin Striker](https://cards.scryfall.io/large/front/f/7/f7654d8a-7013-4311-b29e-b55aaa1bf502.jpg?1562163499) as a blocker for [Ambush Viper](https://cards.scryfall.io/large/front/0/e/0e386888-57f5-4eb6-88e8-5679bb8eb290.jpg?1608910517).  
     2. Since [Goblin Striker](https://cards.scryfall.io/large/front/f/7/f7654d8a-7013-4311-b29e-b55aaa1bf502.jpg?1562163499) has first strike, it will deal its combat damage before [Ambush Viper](https://cards.scryfall.io/large/front/0/e/0e386888-57f5-4eb6-88e8-5679bb8eb290.jpg?1608910517).  
@@ -27,10 +27,10 @@ If you attack with [Ambush Viper](https://cards.scryfall.io/large/front/0/e/0e38
     4. [Ambush Viper](https://cards.scryfall.io/large/front/0/e/0e386888-57f5-4eb6-88e8-5679bb8eb290.jpg?1608910517), being a 2/1 creature, will be destroyed by the 1 damage dealt by [Goblin Striker](https://cards.scryfall.io/large/front/f/7/f7654d8a-7013-4311-b29e-b55aaa1bf502.jpg?1562163499).  
     5. [Ambush Viper](https://cards.scryfall.io/large/front/0/e/0e386888-57f5-4eb6-88e8-5679bb8eb290.jpg?1608910517) will not deal any damage to [Goblin Striker](https://cards.scryfall.io/large/front/f/7/f7654d8a-7013-4311-b29e-b55aaa1bf502.jpg?1562163499) because it has already been destroyed.  
 
-<u>User</u>:  
+<u><b>User</b></u>:  
 Can you explain the stack in Magic: The Gathering and how it works? I'm having trouble understanding the order in which spells and abilities resolve during a turn.
 
-<u>Nissa</u>:  
+<u><b>Nissa</b></u>:  
 The stack in Magic: The Gathering is a conceptual place where spells and abilities are put when they are cast or activated, and before they resolve and have their effect on the game. The stack is fundamental to understanding how spells and abilities work in sequence. Here's how it operates:
 
 1. <b>Spell/Ability</b> Casting or Activation: Any time a spell is cast or an ability is activated, it goes on the stack. This doesn't cause it to resolve immediately; it merely announces the intention to use that spell or ability.
@@ -49,10 +49,10 @@ The stack is a crucial concept for timing and strategy in the game, as it determ
 
 ## Deck Building Advice
 
-<u>User</u>:  
+<u><b>User</b></u>:  
 Tell me 3 Cards that I can add to my [Chatterfang](https://cards.scryfall.io/large/front/1/7/1785cf85-1ac0-4246-9b89-1a8221a8e1b2.jpg?1626097239) Commander Deck.   
 
-<u>Nissa</u>:  
+<u><b>Nissa</b></u>:  
 Sure! Here are three cards that you can consider adding to your [Chatterfang](https://cards.scryfall.io/large/front/1/7/1785cf85-1ac0-4246-9b89-1a8221a8e1b2.jpg?1626097239) Commander deck:
 
 [Skullclamp](https://cards.scryfall.io/large/front/a/3/a36fd6d8-66a2-49d1-b9f3-b400ebc03674.jpg?1682210228): This artifact allows you to draw cards whenever a creature you control dies with power 1 or less. Since Chatterfang creates 1/1 squirrel tokens, sacrificing them with [Skullclamp](https://cards.scryfall.io/large/front/a/3/a36fd6d8-66a2-49d1-b9f3-b400ebc03674.jpg?1682210228) equipped can provide you with a steady stream of card advantage.
@@ -63,10 +63,10 @@ Sure! Here are three cards that you can consider adding to your [Chatterfang](ht
 
 These cards synergize well with [Chatterfang's](https://cards.scryfall.io/large/front/1/7/1785cf85-1ac0-4246-9b89-1a8221a8e1b2.jpg?1626097239) ability to create squirrel tokens and sacrifice them for various effects. They can help you generate card advantage, boost your creatures' power, and create even more tokens for additional value.
 
-<u>User</u>:  
+<u><b>User</b></u>:  
 What is the main strategy for a [Chatterfang, Squirrel General](https://cards.scryfall.io/large/front/1/7/1785cf85-1ac0-4246-9b89-1a8221a8e1b2.jpg?1626097239) commander deck?  
 
-<u>Nissa</u>:  
+<u><b>Nissa</b></u>:  
 A Chatterfang, Squirrel General Commander deck revolves around a token-based strategy, particularly focusing on generating a large number of Squirrel tokens and leveraging Chatterfang's abilities to control the board and finish off opponents.
 
 Here are the key components of a Chatterfang Commander deck strategy:
@@ -102,7 +102,7 @@ The other one for Rules questions. Here the prompt gets augmented with the card 
 
 # Support the Project 
 
-You can support the project on [Patreon](https://www.patreon.com/user?u=112353036&fan_landing=true&view_as=public) #TODO add correct link 
+You can support the project on [Patreon](patreon.com/NissaPlaneswalkerCompanion)
 
 # Contributing
 If you’d like to contribute to this project, please follow these steps:
