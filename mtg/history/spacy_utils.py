@@ -89,12 +89,12 @@ def match_cards(text, cards):
     doc = nlp(text)
     matches = matcher(doc)
     entities: list[Span] = []
-    logger.info(f"matched {len(matches)} cards: {matches}")
     for card_name, start, end, ratio, pattern in matches:
         if doc[start:end].text.lower() not in BLOCK_LIST:
             entities.append(Span(doc, start, end, card_name))
 
     doc._.card_names = list(set([entity.label_ for entity in entities]))
+    logger.info(f"matched {len(doc._.card_names)} cards: {doc._.card_names}")
     doc.ents = list(spacy.util.filter_spans(entities))
     doc = merge_entities(doc)
     logger.debug(

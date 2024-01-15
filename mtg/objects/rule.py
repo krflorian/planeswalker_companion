@@ -19,9 +19,13 @@ class Rule(BaseModel):
         return len(text.split()) // 2
 
     def to_text(self):
-        text = self.text
+        text = ""
+        if self.chapter:
+            text += f"{self.chapter}: "
         if self.subchapter:
-            text = self.subchapter + ": " + text
+            text += self.subchapter
+        text += f" {self.rule_id} "
+        text += self.text
         if self.examples:
             text += "\nExamples:"
             text += "\n".join(self.examples)

@@ -68,7 +68,7 @@ class MagicGPT:
                 message = self.chat_history.create_minimal_message(
                     text=response, role="assistant"
                 )
-                if self.chat_history.chat[-1].role == "user":
+                if self.chat_history.chat[-1].role != "assistant":
                     self.chat_history.chat.append(message)
                 else:
                     self.chat_history.chat[-1] = message
@@ -82,21 +82,18 @@ class MagicGPT:
                 include_rules=False,
             )
             self.chat_history.chat[-1] = message
-            final_chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
+            chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
+            self.memory.save_context(
+                inputs={"human_input": self.chat_history.chat[-2].text},
+                outputs={"assistant": self.chat_history.chat[-1].text},
+            )
+            yield chat
 
-            # save memory
-            if self.conversation_topic == "deck building":
-                self.memory.save_context(
-                    inputs={"human_input": self.chat_history.chat[-2].text},
-                    outputs={"assistant": self.chat_history.chat[-1].text},
-                )
-            else:
-                self.memory.save_context(
-                    inputs={"human_input": self.chat_history.chat[-2].text},
-                    outputs={"assistant": self.chat_history.chat[-1].text},
-                )
-
-            yield final_chat
+            # TODO halucination model
+            if self.conversation_topic == "rules question":
+                self.chat_history.validate_answer()
+                chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
+                yield chat
 
         except Exception as e:
             logger.error(e)
@@ -129,7 +126,6 @@ class MagicGPT:
             number_of_messages=1,
             max_number_of_cards=12,
             include_price=True,
-            include_rulings=False,
         )
 
         partial_message = ""
@@ -157,9 +153,8 @@ class MagicGPT:
             number_of_messages=2,
             max_number_of_cards=6,
             include_price=False,
-            include_rulings=True,
         )
-        rules_data = self.chat_history.get_rules()
+        rules_data = self.chat_history.get_rules_data()
 
         # TODO add rules data
         partial_message = ""

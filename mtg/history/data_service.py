@@ -69,3 +69,37 @@ class DataService:
             cards.append(card)
 
         return cards
+
+    def validate_answer(self, answer: str, rules: list[Rule]) -> tuple[str, float]:
+        rule_texts = [rule.to_text() for rule in rules]
+        response = requests.post(
+            self.url + "hallucination/",
+            json={
+                "text": answer,
+                "chunks": rule_texts,
+            },
+        )
+        response = response.json()
+        relevant_rules = []
+        for idx, chunk in enumerate(response):
+            logger.debug(
+                f"hallucination score: {chunk['score']:2f}, ID: {rules[idx].rule_id} {rules[idx].chapter}"
+            )
+            relevant_rules.append((chunk["score"], rules[idx]))
+        relevant_rules = sorted(relevant_rules, key=lambda x: x[0], reverse=True)[:3]
+
+        if relevant_rules[0][0] >= 0.8:
+            validation_text = f"I am very confident in my answer ({relevant_rules[0][0]*100:.2f}%). It is based on: \n"
+        elif relevant_rules[0][0] >= 0.5:
+            validation_text = f"I am pretty sure this is true ({relevant_rules[0][0]*100:.2f}%). If you want to double check, my answer is based on: \n"
+        else:
+            validation_text = "I could not find any relevant rules in my database. The most fitting are: \n"
+
+        # TODO threshold for relevant rules
+        for score, rule in relevant_rules:
+            validation_text += f" - {rule.chapter}: "
+            if rule.subchapter:
+                validation_text += f"{rule.subchapter} - "
+            validation_text += f"{rule.rule_id}\n"
+
+        return validation_text, relevant_rules[0][0]

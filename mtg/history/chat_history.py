@@ -1,8 +1,6 @@
-import time
-
 from dataclasses import dataclass, field
 
-from mtg.objects import Message
+from mtg.objects import Message, Rule
 from mtg.utils.logging import get_logger
 from .spacy_utils import match_cards
 from .data_service import DataService
@@ -26,7 +24,6 @@ class ChatHistory:
         number_of_messages=2,
         max_number_of_cards=4,
         include_price: bool = False,
-        include_rulings: bool = False,
     ):
         """Get Card data from last n messages in text form."""
         card_data = ""
@@ -36,9 +33,7 @@ class ChatHistory:
 
         card_data += "\n\n".join(
             [
-                card.to_text(
-                    include_price=include_price, include_rulings=include_rulings
-                )
+                card.to_text(include_price=include_price)
                 for card in cards[:max_number_of_cards]
             ]
         )
@@ -46,9 +41,16 @@ class ChatHistory:
             card_data = "No Card Data."
         return card_data
 
-    def get_rules(self):
-        if self.chat[-1].rules:
-            return "\n".join([rule.to_text() for rule in self.chat[-1].rules])
+    def get_rules_data(self, number_of_messages=4):
+        rules = []
+        for message in self.chat[-number_of_messages:]:
+            if message.role == "user" and message.rules:
+                rules.extend(message.rules)
+                for card in message.cards:
+                    rules.extend(card.rulings)
+
+        if rules:
+            return "\n".join([rule.to_text() for rule in rules])
         else:
             return "No Rules found"
 
@@ -60,14 +62,16 @@ class ChatHistory:
         chat = [[user, bot], [user, bot]]
         """
         chat = []
+        last_message_role = None
         for message in self.chat[-number_of_messages:]:
             if message.role == "user":
                 chat.append([message.processed_text])
             if message.role == "assistant":
-                if not chat:
+                if not chat or (last_message_role == "assistant"):
                     chat.append([None, message.processed_text])
                 else:
                     chat[-1].append(message.processed_text)
+            last_message_role = message.role
 
         if len(chat[-1]) == 1:
             # no assistant message
@@ -107,27 +111,34 @@ class ChatHistory:
     def create_message(
         self, text: str, role: str, include_rules: bool = False
     ) -> Message:
-        start = time.time()
+        """Creates processed text (card names as urls), card data and rules data. Only includes card data that is written in the text."""
         logger.info(f"creating message for {role}")
 
-        all_cards = self.data_service.get_cards(text)
-        checkpoint_vector_query = time.time()
+        # add card data
+        if role == "assistant":
+            k = 15
+        else:
+            k = 5
+        all_cards = self.data_service.get_cards(text, k=k)
 
         processed_text, matched_cards = self.replace_card_names_with_urls(
             text=text, cards=all_cards, role=role
         )
-        checkpoint_processed_text = time.time()
 
+        # add rules data
+        rules = []
         if include_rules:
+            # get rules from rulebook
             rules = self.data_service.get_rules(text)
+            # get rules from keywords
             # TODO could be straight search not vector search
             keywords = []
             for card in matched_cards:
                 keywords.extend(card.keywords)
             if keywords:
                 rules.extend(self.data_service.get_rules(".".join(keywords)))
-        else:
-            rules = []
+
+        # create message
         message = Message(
             text=text,
             role=role,
@@ -138,10 +149,7 @@ class ChatHistory:
         logger.info(
             f"message created with {len(matched_cards)} cards and {len(rules)} rules"
         )
-        checkpoint_end = time.time()
-        logger.debug(
-            f"query runtime: {checkpoint_vector_query-start:.2f}sec, text processing runtime: {checkpoint_processed_text-checkpoint_vector_query:.2f}sec, total runtime {checkpoint_end-start:.2f}sec"
-        )
+
         return message
 
     def create_minimal_message(self, text: str, role: str) -> Message:
@@ -157,7 +165,7 @@ class ChatHistory:
         for card in message.cards:
             # for each card in message get max_number_of_cards
             additional_cards = self.data_service.get_cards(
-                card.to_text(include_rulings=False, include_price=False),
+                card.to_text(include_price=False),
                 k=max_number_of_cards,  # TODO: could be more
                 threshold=threshold,
                 lasso_threshold=lasso_threshold,
@@ -170,3 +178,29 @@ class ChatHistory:
                 logger.debug(f"added additional card: {card.name}")
 
         return message
+
+    def validate_answer(self, number_of_messages=4):
+        message = self.chat[-1]
+        if message.role != "assistant":
+            logger.debug("last chat message is not from assistant")
+            return
+
+        rules = []
+        for message in self.chat[-number_of_messages:]:
+            if message.role == "user" and message.rules:
+                rules.extend(message.rules)
+                for card in message.cards:
+                    rules.extend(card.rulings)
+                    for text in card.oracle.split("\n"):
+                        rules.append(
+                            Rule(text=text, chapter=card.name, rule_id="oracle text")
+                        )
+
+        logger.info(f"evaluating {len(rules)} against answer")
+        validation_text, score = self.data_service.validate_answer(message.text, rules)
+
+        logger.info(f"validation score {score:.2f}%")
+
+        self.chat.append(
+            Message(validation_text, role="assistant", processed_text=validation_text)
+        )

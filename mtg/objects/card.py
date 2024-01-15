@@ -1,5 +1,6 @@
 from pathlib import Path
 from pydantic import BaseModel, Field
+from .rule import Rule
 
 
 class Card(BaseModel):
@@ -14,13 +15,13 @@ class Card(BaseModel):
     toughness: str = "0"
     color_identity: list[str] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
-    rulings: list[str] = Field(default_factory=list)
+    rulings: list[Rule] = Field(default_factory=list)
     _image: Path = None
 
     def __repr__(self) -> str:
         return f"Card({self.name})"
 
-    def to_text(self, include_rulings: bool = True, include_price: bool = True):
+    def to_text(self, include_price: bool = True):
         """parse card data to text format"""
         text = []
         text.append(self.name)
@@ -38,10 +39,5 @@ class Card(BaseModel):
         if include_price:
             if self.price != 0.0:
                 text.append(f"price in EUR: {self.price}")
-
-        # rulings
-        if include_rulings and self.rulings:
-            text.append(f"Rulings for {self.name}: ")
-            text.append("\n".join(self.rulings))
 
         return "\n".join(text)
