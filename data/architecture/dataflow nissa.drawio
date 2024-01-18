@@ -1,0 +1,205 @@
+<mxfile host="app.diagrams.net" modified="2024-01-03T15:11:53.425Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" etag="WZsdSQaPu4V_QUKUDkNa" version="22.1.16" type="device">
+  <diagram name="Page-1" id="fytHRE2vKhSKZ4IzdHz6">
+    <mxGraphModel dx="1434" dy="738" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="9gXILwcntKetTa_IWpgi-3" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="330" y="270" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-1" value="User Question" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;" vertex="1" parent="1">
+          <mxGeometry x="270" y="100" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-5" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" target="9gXILwcntKetTa_IWpgi-4">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="370" y="300" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-7" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=-0.059;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-46" target="9gXILwcntKetTa_IWpgi-6">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="270" y="300" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-10" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-4" target="9gXILwcntKetTa_IWpgi-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-4" value="Rules Question" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="470" y="270" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-16" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-6" target="9gXILwcntKetTa_IWpgi-15">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-6" value="Deckbuilding" style="whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="70" y="270" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="360" y="395" as="sourcePoint" />
+            <mxPoint x="470" y="445" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="360" y="390" />
+              <mxPoint x="450" y="390" />
+              <mxPoint x="450" y="440" />
+              <mxPoint x="470" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-12" value="add Rules" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="9gXILwcntKetTa_IWpgi-11">
+          <mxGeometry x="-0.0143" y="2" relative="1" as="geometry">
+            <mxPoint x="-32" y="2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0;exitDx=0;exitDy=52.5;exitPerimeter=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-8" target="9gXILwcntKetTa_IWpgi-9">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-14" value="add Cards" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="9gXILwcntKetTa_IWpgi-13">
+          <mxGeometry x="-0.1137" y="1" relative="1" as="geometry">
+            <mxPoint x="6" y="1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0;exitDx=0;exitDy=27.5;exitPerimeter=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-8" target="9gXILwcntKetTa_IWpgi-15">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="300" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-18" value="add Cards" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="9gXILwcntKetTa_IWpgi-17">
+          <mxGeometry x="-0.0246" y="1" relative="1" as="geometry">
+            <mxPoint x="-23" y="-1" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-8" value="Vector DB" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" vertex="1" parent="1">
+          <mxGeometry x="300" y="380" width="60" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-9" value="Rules Question Prompt" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;" vertex="1" parent="1">
+          <mxGeometry x="470" y="400" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-15" value="Deckbuilding Prompt" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;" vertex="1" parent="1">
+          <mxGeometry x="70" y="400" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" target="9gXILwcntKetTa_IWpgi-22">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="338.29999999999995" y="623" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-9">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="376.5" y="576.5" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="530" y="577" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-15">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="300" y="576.5" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="130" y="577" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-27" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-22" target="9gXILwcntKetTa_IWpgi-26">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-28" value="add URLs for Cards" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="9gXILwcntKetTa_IWpgi-27">
+          <mxGeometry x="-0.1" y="-1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-22" value="Response" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;" vertex="1" parent="1">
+          <mxGeometry x="278.25" y="680" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-26" target="9gXILwcntKetTa_IWpgi-31">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-35" value="If Rules Question" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="9gXILwcntKetTa_IWpgi-32">
+          <mxGeometry x="-0.25" y="-1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-48" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-26" target="9gXILwcntKetTa_IWpgi-49">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="198.25" y="880" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-50" value="Yield Response" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="9gXILwcntKetTa_IWpgi-48">
+          <mxGeometry x="-0.323" relative="1" as="geometry">
+            <mxPoint x="-11" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-26" value="Processed Response" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;" vertex="1" parent="1">
+          <mxGeometry x="278.25" y="840" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-30" value="Language Model" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/ai_machine_learning/Cognitive_Services.svg;" vertex="1" parent="1">
+          <mxGeometry x="304.25" y="550" width="68" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-37" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-31" target="9gXILwcntKetTa_IWpgi-36">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-31" value="Halucination Model" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/ai_machine_learning/Cognitive_Services.svg;" vertex="1" parent="1">
+          <mxGeometry x="304.25" y="970" width="68" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-39" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-36" target="9gXILwcntKetTa_IWpgi-38">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-40" value="Yes" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="9gXILwcntKetTa_IWpgi-39">
+          <mxGeometry x="-0.1437" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-42" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-36" target="9gXILwcntKetTa_IWpgi-41">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-43" value="No" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="9gXILwcntKetTa_IWpgi-42">
+          <mxGeometry x="0.0438" y="-1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-36" value="Check if Rules align with Response" style="whiteSpace=wrap;html=1;verticalAlign=top;labelBackgroundColor=default;" vertex="1" parent="1">
+          <mxGeometry x="278.25" y="1082" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-38" value="Do nothing" style="whiteSpace=wrap;html=1;verticalAlign=top;labelBackgroundColor=default;" vertex="1" parent="1">
+          <mxGeometry x="78.25" y="1082" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-41" value="Get whole Chapter for most significant Rule" style="whiteSpace=wrap;html=1;verticalAlign=top;labelBackgroundColor=default;" vertex="1" parent="1">
+          <mxGeometry x="478.25" y="1082" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-58" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.996;entryY=0.563;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-45" target="9gXILwcntKetTa_IWpgi-30">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="530" y="570" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-45" value="Halucination Prompt" style="shape=document;whiteSpace=wrap;html=1;boundedLbl=1;" vertex="1" parent="1">
+          <mxGeometry x="470" y="760" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-46" value="Intention Classifier" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/ai_machine_learning/Cognitive_Services.svg;" vertex="1" parent="1">
+          <mxGeometry x="300" y="276" width="68" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-49" value="User" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="123.25" y="850" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-54" value="User" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" vertex="1" parent="1">
+          <mxGeometry x="115" y="100" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-55" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=-0.025;entryY=0.375;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-54" target="9gXILwcntKetTa_IWpgi-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-56" value="asks" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="9gXILwcntKetTa_IWpgi-55">
+          <mxGeometry x="0.0164" y="1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="9gXILwcntKetTa_IWpgi-57" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.575;entryY=0.775;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1" source="9gXILwcntKetTa_IWpgi-41" target="9gXILwcntKetTa_IWpgi-45">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
