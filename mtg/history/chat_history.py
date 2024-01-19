@@ -1,5 +1,3 @@
-from dataclasses import dataclass, field
-
 from mtg.objects import Message, Rule
 from mtg.utils.logging import get_logger
 from .spacy_utils import match_cards
@@ -10,7 +8,7 @@ logger = get_logger(__name__)
 
 class ChatHistory:
     def __init__(self, data_service_host: str = "127.0.0.1"):
-        self.chat: list[Message] = field(default_factory=list)
+        self.chat: list[Message] = []
         self.data_service = DataService(host=data_service_host)
 
     def add_message(self, message: Message):
