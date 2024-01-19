@@ -5,7 +5,7 @@ import logging
 
 def get_openai_api_key():
     try:
-        with open("config/config.yaml", "r") as infile:
+        with open("configs/config.yaml", "r") as infile:
             config = yaml.load(infile, Loader=yaml.FullLoader)
         openai_api_key = config.get("open_ai_token")
         logging.info("loaded open ai token from config file ")

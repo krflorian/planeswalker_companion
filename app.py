@@ -58,7 +58,7 @@ with gradio.Blocks() as ui:
 
     gradio.Markdown(
         """
-    Support Nissa on [Patreon](patreon.com/NissaPlaneswalkerCompanion)
+    Support Nissa on [Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)
     """
     )
     # submit text

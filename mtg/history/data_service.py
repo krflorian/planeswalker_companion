@@ -8,7 +8,7 @@ logger = get_logger(__name__)
 
 
 class DataService:
-    url = "http://127.0.0.1:8000/"
+    url = "http://data_service:8000/"
 
     def get_rules(
         self,
