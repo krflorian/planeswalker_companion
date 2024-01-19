@@ -1,16 +1,19 @@
 import gradio
 import yaml
 from uuid import uuid4
-from datetime import date, datetime
+from datetime import datetime
 
 from mtg.bot import MagicGPT
+from mtg.utils.logging import get_logger
 from mtg.history.chat_history import ChatHistory
 
-VERSION = "0.0.1"
+VERSION = "0.0.2"
 MODEL_NAME = "gpt-4-1106-preview"
 
 with open("configs/config.yaml", "r") as infile:
     config = yaml.load(infile, Loader=yaml.FullLoader)
+
+logger = get_logger("app")
 
 HEADER_TEXT = """
 # Hi, I'm Nissa! 
@@ -70,7 +73,8 @@ with gradio.Blocks() as ui:
     # chat
     chat = gradio.Chatbot()
 
-    session_id = gradio.State(str(uuid4()))
+    session_id = gradio.State(uuid4())
+    logger.info(f"started a new session: {session_id.value}")
     user_message = gradio.State("")
 
     # textbox
