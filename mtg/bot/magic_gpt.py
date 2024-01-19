@@ -68,7 +68,9 @@ class MagicGPT:
                 message = self.chat_history.create_minimal_message(
                     text=response, role="assistant"
                 )
-                if self.chat_history.chat[-1].role != "assistant":
+                if not self.chat_history.chat:
+                    self.chat_history.chat.append(message)
+                elif self.chat_history.chat[-1].role != "assistant":
                     self.chat_history.chat.append(message)
                 else:
                     self.chat_history.chat[-1] = message
