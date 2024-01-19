@@ -1,9 +1,13 @@
 import gradio
+import yaml
 
 from mtg.bot import MagicGPT
 from mtg.history.chat_history import ChatHistory
 
 MODEL_NAME = "gpt-4-1106-preview"
+
+with open("configs/config.yaml", "r") as infile:
+    config = yaml.load(infile, Loader=yaml.FullLoader)
 
 
 def update_user_message(user_message, magic_bot: MagicGPT):
@@ -39,7 +43,9 @@ with gradio.Blocks() as ui:
     chat = gradio.Chatbot()
     magic_bot = gradio.State(
         MagicGPT(
-            chat_history=ChatHistory(),
+            chat_history=ChatHistory(
+                data_service_host=config.get("data_service_host", "127.0.0.1")
+            ),
             model=MODEL_NAME,
             temperature_deck_building=0.7,
             max_token_limit=2000,

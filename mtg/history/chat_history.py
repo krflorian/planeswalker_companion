@@ -8,10 +8,10 @@ from .data_service import DataService
 logger = get_logger(__name__)
 
 
-@dataclass
 class ChatHistory:
-    chat: list[Message] = field(default_factory=list)
-    data_service = DataService()
+    def __init__(self, data_service_host: str = "127.0.0.1"):
+        self.chat: list[Message] = field(default_factory=list)
+        self.data_service = DataService(host=data_service_host)
 
     def add_message(self, message: Message):
         self.chat.append(message)
