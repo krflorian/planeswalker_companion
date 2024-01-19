@@ -1,5 +1,7 @@
 import gradio
 import yaml
+from uuid import uuid4
+from datetime import date, datetime
 
 from mtg.bot import MagicGPT
 from mtg.history.chat_history import ChatHistory
@@ -20,18 +22,27 @@ Support Nissa on [Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)
 version: {VERSION}
 """
 
-magic_bot = MagicGPT(
-    chat_history=ChatHistory(
-        data_service_host=config.get("data_service_host", "127.0.0.1")
-    ),
-    model=MODEL_NAME,
-    temperature_deck_building=0.7,
-    max_token_limit=2000,
-)
+user_sessions = {}
+last_reset_date = datetime.now().date()
 
 
-def update_user_message(user_message, magic_bot: MagicGPT = magic_bot):
-    """"""
+def get_user_magic_bot(session_id):
+    magic_bot = user_sessions.get(session_id, None)
+    if magic_bot is None:
+        magic_bot = MagicGPT(
+            chat_history=ChatHistory(
+                data_service_host=config.get("data_service_host", "127.0.0.1")
+            ),
+            model=MODEL_NAME,
+            temperature_deck_building=0.7,
+            max_token_limit=2000,
+        )
+        user_sessions[session_id] = magic_bot
+    return magic_bot
+
+
+def update_user_message(user_message, session_id):
+    magic_bot = get_user_magic_bot(session_id=session_id)
     chat = magic_bot.process_user_query(user_message)
     return chat
 
@@ -41,13 +52,15 @@ def update_textbox(textboxtext, user_message):
     return "", user_message
 
 
-def process_user_message(magic_bot: MagicGPT = magic_bot):
+def process_user_message(session_id):
+    magic_bot = get_user_magic_bot(session_id=session_id)
     responses = magic_bot.ask()
     for chat in responses:
         yield chat
 
 
-def clear_memory(magic_bot: MagicGPT = magic_bot):
+def clear_memory(session_id):
+    magic_bot = get_user_magic_bot(session_id=session_id)
     magic_bot.clear_memory()
 
 
@@ -57,6 +70,7 @@ with gradio.Blocks() as ui:
     # chat
     chat = gradio.Chatbot()
 
+    session_id = gradio.State(str(uuid4()))
     user_message = gradio.State("")
 
     # textbox
@@ -75,11 +89,11 @@ with gradio.Blocks() as ui:
         update_textbox, inputs=[txt, user_message], outputs=[txt, user_message]
     ).then(
         update_user_message,
-        inputs=[user_message],
+        inputs=[user_message, session_id],
         outputs=[chat],
         queue=False,
     ).then(
-        process_user_message, outputs=[chat]
+        process_user_message, inputs=[session_id], outputs=[chat]
     )
 
     # submit button
@@ -87,13 +101,19 @@ with gradio.Blocks() as ui:
         update_textbox, inputs=[txt, user_message], outputs=[txt, user_message]
     ).then(
         update_user_message,
-        inputs=[user_message],
+        inputs=[user_message, session_id],
         outputs=[chat],
         queue=False,
     ).then(
-        process_user_message, outputs=[chat]
+        process_user_message, inputs=[session_id], outputs=[chat]
     )
 
     # clear button
-    clear_btn.click(clear_memory)
+    clear_btn.click(clear_memory, inputs=[session_id])
+
+    # reset memory at midnight
+    if datetime.now().date() > last_reset_date:
+        user_sessions = {}
+        last_reset_date = datetime.now().date()
+
 ui.launch()
