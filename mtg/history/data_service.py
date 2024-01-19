@@ -1,13 +1,11 @@
 import requests
-from dataclasses import dataclass, field
 from mtg.objects import Card, Rule
 from mtg.utils.logging import get_logger
 
 logger = get_logger(__name__)
 
+
 # TODO make async calls
-
-
 class DataService:
     def __init__(self, host: str):
         self.url = f"http://{host}:8000/"
