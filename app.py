@@ -73,7 +73,7 @@ with gradio.Blocks() as ui:
     # chat
     chat = gradio.Chatbot()
 
-    session_id = gradio.State(uuid4())
+    session_id = gradio.State(uuid4)
     logger.info(f"started a new session: {session_id.value}")
     user_message = gradio.State("")
 
