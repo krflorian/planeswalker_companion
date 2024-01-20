@@ -1,19 +1,13 @@
 import gradio
 import yaml
-from uuid import uuid4
-from datetime import datetime
 
 from mtg.bot import MagicGPT
-from mtg.utils.logging import get_logger
 from mtg.history.chat_history import ChatHistory
+from mtg.utils.logging import get_logger
 
 VERSION = "0.0.2"
+
 MODEL_NAME = "gpt-4-1106-preview"
-
-with open("configs/config.yaml", "r") as infile:
-    config = yaml.load(infile, Loader=yaml.FullLoader)
-
-logger = get_logger("app")
 
 HEADER_TEXT = """
 # Hi, I'm Nissa! 
@@ -25,45 +19,47 @@ Support Nissa on [Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)
 version: {VERSION}
 """
 
-user_sessions = {}
-last_reset_date = datetime.now().date()
+logger = get_logger(__name__)
+
+with open("configs/config.yaml", "r") as infile:
+    config = yaml.load(infile, Loader=yaml.FullLoader)
 
 
-def get_user_magic_bot(session_id):
-    magic_bot = user_sessions.get(session_id, None)
-    if magic_bot is None:
-        magic_bot = MagicGPT(
-            chat_history=ChatHistory(
-                data_service_host=config.get("data_service_host", "127.0.0.1")
-            ),
-            model=MODEL_NAME,
-            temperature_deck_building=0.7,
-            max_token_limit=2000,
-        )
-        user_sessions[session_id] = magic_bot
+def get_magic_bot() -> MagicGPT:
+    """Initialize Magicbot with Memory for user session."""
+    logger.info("Creating new user session.")
+    magic_bot = MagicGPT(
+        chat_history=ChatHistory(
+            data_service_host=config.get("data_service_host", "127.0.0.1")
+        ),
+        model=MODEL_NAME,
+        temperature_deck_building=0.7,
+        max_token_limit=2000,
+    )
     return magic_bot
 
 
-def update_user_message(user_message, session_id):
-    magic_bot = get_user_magic_bot(session_id=session_id)
+def update_user_message(user_message: str, magic_bot: MagicGPT):
+    """Process the User question - Classifies intent and adds information."""
     chat = magic_bot.process_user_query(user_message)
-    return chat
+    return chat, magic_bot
 
 
-def update_textbox(textboxtext, user_message):
+def update_textbox(textboxtext: str, user_message: str):
+    """Clear the user message from Textbox."""
     user_message = textboxtext
     return "", user_message
 
 
-def process_user_message(session_id):
-    magic_bot = get_user_magic_bot(session_id=session_id)
+def process_user_message(magic_bot: MagicGPT):
+    """Streams the response of the Chatbot."""
     responses = magic_bot.ask()
     for chat in responses:
         yield chat
 
 
-def clear_memory(session_id):
-    magic_bot = get_user_magic_bot(session_id=session_id)
+def clear_memory(magic_bot: MagicGPT):
+    """Delete conversation history."""
     magic_bot.clear_memory()
 
 
@@ -73,8 +69,7 @@ with gradio.Blocks() as ui:
     # chat
     chat = gradio.Chatbot()
 
-    session_id = gradio.State(uuid4)
-    logger.info(f"started a new session: {session_id.value}")
+    magic_bot = gradio.State(get_magic_bot)
     user_message = gradio.State("")
 
     # textbox
@@ -93,11 +88,11 @@ with gradio.Blocks() as ui:
         update_textbox, inputs=[txt, user_message], outputs=[txt, user_message]
     ).then(
         update_user_message,
-        inputs=[user_message, session_id],
-        outputs=[chat],
+        inputs=[user_message, magic_bot],
+        outputs=[chat, magic_bot],
         queue=False,
     ).then(
-        process_user_message, inputs=[session_id], outputs=[chat]
+        process_user_message, inputs=[magic_bot], outputs=[chat]
     )
 
     # submit button
@@ -105,19 +100,14 @@ with gradio.Blocks() as ui:
         update_textbox, inputs=[txt, user_message], outputs=[txt, user_message]
     ).then(
         update_user_message,
-        inputs=[user_message, session_id],
-        outputs=[chat],
+        inputs=[user_message, magic_bot],
+        outputs=[chat, magic_bot],
         queue=False,
     ).then(
-        process_user_message, inputs=[session_id], outputs=[chat]
+        process_user_message, inputs=[magic_bot], outputs=[chat]
     )
 
     # clear button
-    clear_btn.click(clear_memory, inputs=[session_id])
-
-    # reset memory at midnight
-    if datetime.now().date() > last_reset_date:
-        user_sessions = {}
-        last_reset_date = datetime.now().date()
+    clear_btn.click(clear_memory, inputs=[magic_bot])
 
 ui.launch()

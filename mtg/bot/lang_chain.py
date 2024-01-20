@@ -17,9 +17,10 @@ from langchain.schema.runnable import RunnableLambda, RunnablePassthrough
 from operator import itemgetter
 
 from mtg.utils import get_openai_api_key
+from mtg.utils.logging import get_logger
 
 openai_api_key = get_openai_api_key()
-
+logger = get_logger(__name__)
 
 DECKBUILDING_SYSTEM_MESSAGE = """
 You are Nissa a Magic the Gathering Assistant that helps with deckbuilding. Give your advice on which cards are best for the users deck.
@@ -147,6 +148,6 @@ def create_chains(
         pydantic_schema=TopicClassifier, attr_name="topic"
     )
     classifier_chain = classifier | parser
-    print("created all chains...")
+    logger.info("created all chains...")
 
     return classifier_chain, deckbuilding_chat, rules_question_chat, memory

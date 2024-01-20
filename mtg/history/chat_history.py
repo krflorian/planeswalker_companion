@@ -160,6 +160,7 @@ class ChatHistory:
         threshold: float = 0.5,
         lasso_threshold: float = 0.03,
     ) -> Message:
+        additional_cards = []
         for card in message.cards:
             # for each card in message get max_number_of_cards
             additional_cards = self.data_service.get_cards(
