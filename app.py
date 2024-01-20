@@ -7,7 +7,7 @@ from mtg.utils.logging import get_logger
 
 VERSION = "0.0.2"
 
-MODEL_NAME = "gpt-4-1106-preview"
+MODEL_NAME = "gpt-3.5-turbo"
 
 HEADER_TEXT = """
 # Hi, I'm Nissa! 
