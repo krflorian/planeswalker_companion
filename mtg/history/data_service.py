@@ -47,7 +47,7 @@ class DataService:
         threshold: float = 0.4,
         lasso_threshold: float = 0.1,
         sample_results: bool = False,
-    ):
+    ) -> list[Card]:
         response = requests.post(
             self.url + "cards/",
             json={
@@ -71,6 +71,12 @@ class DataService:
         return cards
 
     def validate_answer(self, answer: str, rules: list[Rule]) -> tuple[str, float]:
+        if not rules:
+            return (
+                "I could not find any relevant rules for this question",
+                0.0,
+            )
+
         rule_texts = [rule.to_text() for rule in rules]
         response = requests.post(
             self.url + "hallucination/",
@@ -99,7 +105,20 @@ class DataService:
         for score, rule in relevant_rules:
             validation_text += f" - {rule.chapter}: "
             if rule.subchapter:
-                validation_text += f"{rule.subchapter} - "
+                validation_text += f"{rule.subchapter}, "
             validation_text += f"{rule.rule_id}\n"
 
         return validation_text, relevant_rules[0][0]
+
+    def classify_intent(self, text: str) -> str:
+        response = requests.post(
+            self.url + "nli/",
+            json={
+                "text": text,
+            },
+        )
+        response = response.json()
+        logger.info(
+            f"question classified as {response['intent']}: {response['score']:.2f}"
+        )
+        return response["intent"]
