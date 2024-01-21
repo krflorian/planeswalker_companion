@@ -5,9 +5,16 @@ from mtg.bot import MagicGPT
 from mtg.history.chat_history import ChatHistory
 from mtg.utils.logging import get_logger
 
+logger = get_logger(__name__)
+
+with open("configs/config.yaml", "r") as infile:
+    config = yaml.load(infile, Loader=yaml.FullLoader)
+
+
 VERSION = "0.0.2"
 
-MODEL_NAME = "gpt-3.5-turbo"
+MODEL_NAME = config.get("llm_model_name", "gpt-4")
+logger.info(f"using model: {MODEL_NAME}")
 
 HEADER_TEXT = """
 # Hi, I'm Nissa! 
@@ -18,11 +25,6 @@ FOOTER_TEXT = f"""
 Support Nissa on [Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)  
 version: {VERSION}
 """
-
-logger = get_logger(__name__)
-
-with open("configs/config.yaml", "r") as infile:
-    config = yaml.load(infile, Loader=yaml.FullLoader)
 
 
 def get_magic_bot() -> MagicGPT:
