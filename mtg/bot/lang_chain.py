@@ -22,6 +22,22 @@ from mtg.utils.logging import get_logger
 openai_api_key = get_openai_api_key()
 logger = get_logger(__name__)
 
+
+CONVERSATIONAL_SYSTEM_MESSAGE = """
+You are Nissa a friendly Magic the Gathering Assistant. You can talk to the user about general Magic: the Gathering related topics.
+If you recognize malicious intent in the user question tell him in a friendly way your intended use is deck building and rule advice regarding Magic: the Gathering. 
+Only answer questions regarding Magic the Gathering.
+"""
+
+CONVERSATIONAL_PROMPT = """
+Card data: {card_data}
+
+Remember:  Do not answer questions unrelated to Magic the Gathering. Under no circumstances can you answer questions regarding Yu-Gi-Oh, Pokemon or other trading card games.
+
+{human_input}
+"""
+
+
 DECKBUILDING_SYSTEM_MESSAGE = """
 You are Nissa a Magic the Gathering Assistant that helps with deckbuilding. Give your advice on which cards are best for the users deck.
 Let`s think step by step which cards are best for the users deck. Take the cards in context as suggestions and include them if they make sense in the deck.
@@ -82,6 +98,14 @@ def create_chains(
         Deckbuilding Chat: takes text and card data and returns text
         Rules Question Chat: takes text, card data and rules data and returns text
     """
+    conversational_prompt = ChatPromptTemplate.from_messages(
+        [
+            SystemMessage(content=CONVERSATIONAL_SYSTEM_MESSAGE),
+            MessagesPlaceholder(variable_name="history"),
+            HumanMessagePromptTemplate.from_template(CONVERSATIONAL_PROMPT),
+        ]
+    )
+
     deckbuilding_prompt = ChatPromptTemplate.from_messages(
         [
             SystemMessage(content=DECKBUILDING_SYSTEM_MESSAGE),
@@ -98,6 +122,7 @@ def create_chains(
         ]
     )
 
+    # rules
     rules_llm = ChatOpenAI(
         openai_api_key=openai_api_key,
         model=model,
@@ -106,6 +131,7 @@ def create_chains(
         verbose=True,
     )
 
+    # memory
     memory = ConversationTokenBufferMemory(
         llm=rules_llm,
         memory_key="history",
@@ -123,6 +149,24 @@ def create_chains(
         | rules_llm
     )
 
+    # conversational
+    conversational_llm = ChatOpenAI(
+        openai_api_key=openai_api_key,
+        model=model,
+        temperature=0.5,
+        n=max_responses,
+        verbose=True,
+    )
+
+    conversational_chat = (
+        RunnablePassthrough.assign(
+            history=RunnableLambda(memory.load_memory_variables) | itemgetter("history")
+        )
+        | conversational_prompt
+        | conversational_llm
+    )
+
+    # deckbuilding
     deck_llm = ChatOpenAI(
         openai_api_key=openai_api_key,
         model=model,
@@ -139,15 +183,6 @@ def create_chains(
         | deck_llm
     )
 
-    # classifier
-    classifier_function = convert_pydantic_to_openai_function(TopicClassifier)
-    classifier = ChatOpenAI(openai_api_key=openai_api_key, model=model).bind(
-        functions=[classifier_function], function_call={"name": "TopicClassifier"}
-    )
-    parser = PydanticAttrOutputFunctionsParser(
-        pydantic_schema=TopicClassifier, attr_name="topic"
-    )
-    classifier_chain = classifier | parser
     logger.info("created all chains...")
 
-    return classifier_chain, deckbuilding_chat, rules_question_chat, memory
+    return conversational_chat, deckbuilding_chat, rules_question_chat, memory

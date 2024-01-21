@@ -26,6 +26,7 @@ BLOCK_LIST = [
     "sorry",
     "flash",
     "X",
+    "game",
 ]
 
 Doc.set_extension("card_names", default=[])

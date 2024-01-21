@@ -19,7 +19,7 @@ class MagicGPT:
         max_responses: int = 1,
     ):
         (
-            classifier_chain,
+            conversational_chat,
             deckbuilding_chat,
             rules_question_chat,
             memory,
@@ -33,7 +33,7 @@ class MagicGPT:
         self._last_updated: datetime = datetime.now()
         self.chat_history: ChatHistory = chat_history
         self.memory = memory
-        self.classifier_chain: LLMChain = classifier_chain
+        self.conversational_chat: LLMChain = conversational_chat
         self.deckbuilding_chat: LLMChain = deckbuilding_chat
         self.rules_question_chat: LLMChain = rules_question_chat
         self.conversation_topic: str = None  # TODO should be ENUM
@@ -44,33 +44,29 @@ class MagicGPT:
         logger.info("memory cleared")
 
     def process_user_query(self, query):
-        # branch
-        topic = self.classifier_chain.invoke(query)
-        logger.info(f"topic of the question is: {topic}")
-
-        self.conversation_topic = topic
-
-        if topic == "deck building":
-            chat = self._process_deckbuilding_question(query)
-        else:
-            chat = self._process_rules_question(query)
+        self.chat_history.add_user_message(query)
+        chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
 
         return chat
 
     def ask(self):
         try:
-            if self.conversation_topic == "deck building":
+            topic = self.chat_history.conversation_topic
+            if topic == "deckbuilding":
                 response_iterator = self._ask_deckbuilding_question()
-            else:
+            elif topic == "rules":
                 response_iterator = self._ask_rules_question()
+            else:
+                response_iterator = self._ask_conversational_question()
 
+            # stream response
             for response in response_iterator:
                 message = self.chat_history.create_minimal_message(
-                    text=response, role="assistant"
+                    text=response, type="assistant"
                 )
                 if not self.chat_history.chat:
                     self.chat_history.chat.append(message)
-                elif self.chat_history.chat[-1].role != "assistant":
+                elif self.chat_history.chat[-1].type != "assistant":
                     self.chat_history.chat.append(message)
                 else:
                     self.chat_history.chat[-1] = message
@@ -79,9 +75,7 @@ class MagicGPT:
 
             # create final message
             message = self.chat_history.create_message(
-                response,
-                role="assistant",
-                include_rules=False,
+                response, message_type="assistant"
             )
             self.chat_history.chat[-1] = message
             chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
@@ -91,35 +85,38 @@ class MagicGPT:
             )
             yield chat
 
-            # TODO halucination model
-            if self.conversation_topic == "rules question":
+            # check rules
+            if topic == "rules":
                 self.chat_history.validate_answer()
                 chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
                 yield chat
 
         except Exception as e:
-            logger.error(e)
+            logger.exception(e)
             self.clear_memory()
+
             yield [
                 [
-                    self.chat_history.chat[-1].text,
+                    None,
                     f"Something went wrong, I am restarting. Please ask the question again.",
                 ]
             ]
 
-    def _process_deckbuilding_question(self, query) -> list[list[str, str]]:
-        logger.info("processing deck building query")
+    def _ask_conversational_question(self) -> str:
+        logger.info("invoking conversational chain")
 
-        message = self.chat_history.create_message(
-            query, role="user", include_rules=False
+        card_data = self.chat_history.get_card_data(
+            number_of_messages=2,
+            max_number_of_cards=6,
+            include_price=True,
         )
 
-        message = self.chat_history.add_additional_cards(
-            message=message, max_number_of_cards=10, threshold=0.5, lasso_threshold=0.03
-        )
-        self.chat_history.add_message(message=message)
-
-        return self.chat_history.get_human_readable_chat(number_of_messages=6)
+        partial_message = ""
+        for response in self.conversational_chat.stream(
+            {"human_input": self.chat_history.chat[-1].text, "card_data": card_data}
+        ):
+            partial_message += response.content
+            yield partial_message
 
     def _ask_deckbuilding_question(self) -> str:
         logger.info("invoking deck building chain")
@@ -136,17 +133,6 @@ class MagicGPT:
         ):
             partial_message += response.content
             yield partial_message
-
-    def _process_rules_question(self, query) -> list[list[str, str]]:
-        logger.info("processing rules question")
-
-        # process query
-        message = self.chat_history.create_message(
-            query, role="user", include_rules=True
-        )
-        self.chat_history.add_message(message=message)
-
-        return self.chat_history.get_human_readable_chat(number_of_messages=6)
 
     def _ask_rules_question(self):
         logger.info("invoking rules chain")

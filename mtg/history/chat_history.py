@@ -1,7 +1,8 @@
-from mtg.objects import Message, Rule
+from mtg.objects import Message, MessageType, Rule
 from mtg.utils.logging import get_logger
 from .spacy_utils import match_cards
 from .data_service import DataService
+import random
 
 logger = get_logger(__name__)
 
@@ -11,8 +12,24 @@ class ChatHistory:
         self.chat: list[Message] = []
         self.data_service = DataService(host=data_service_host)
 
+    @property
+    def conversation_topic(self):
+        if self.chat:
+            return self.chat[-1].type
+        logger.debug("did not find a conversation topic")
+        return "conversation"
+
     def add_message(self, message: Message):
         self.chat.append(message)
+
+    def add_user_message(self, query: str) -> None:
+        intent = self.classify_intent(query)
+        message = self.create_message(query, message_type=intent)
+        self.add_message(message)
+
+    def add_assistant_message(self, text: str) -> None:
+        message = self.create_message(text, message_type="assistant")
+        self.add_message(message)
 
     def clear(self):
         self.chat = []
@@ -42,13 +59,17 @@ class ChatHistory:
     def get_rules_data(self, number_of_messages=4):
         rules = []
         for message in self.chat[-number_of_messages:]:
-            if message.role == "user" and message.rules:
+            if message.type == "rules":
                 rules.extend(message.rules)
                 for card in message.cards:
                     rules.extend(card.rulings)
+        filtered_rules = []
+        for rule in rules:
+            if rule.text not in [r.text for r in filtered_rules]:
+                filtered_rules.append(rule)
 
-        if rules:
-            return "\n".join([rule.to_text() for rule in rules])
+        if filtered_rules:
+            return "\n".join([rule.to_text() for rule in filtered_rules])
         else:
             return "No Rules found"
 
@@ -60,23 +81,23 @@ class ChatHistory:
         chat = [[user, bot], [user, bot]]
         """
         chat = []
-        last_message_role = None
+        last_message_type = None
         for message in self.chat[-number_of_messages:]:
-            if message.role == "user":
-                chat.append([message.processed_text])
-            if message.role == "assistant":
-                if not chat or (last_message_role == "assistant"):
+            if message.type == "assistant":
+                if not chat or (last_message_type == "assistant"):
                     chat.append([None, message.processed_text])
                 else:
                     chat[-1].append(message.processed_text)
-            last_message_role = message.role
+            else:
+                chat.append([message.processed_text])
+            last_message_type = message.type
 
         if len(chat[-1]) == 1:
             # no assistant message
             chat[-1].append(None)
         return chat
 
-    def replace_card_names_with_urls(self, text, cards, role="user") -> str:
+    def replace_card_names_with_urls(self, text, cards, message_type="user") -> str:
         """Find Card Names in text and replace them with their URL. Return only Cards that are found in the text."""
 
         if not cards:
@@ -94,7 +115,7 @@ class ChatHistory:
                 else:
                     if card not in filtered_cards:
                         filtered_cards.append(card)
-                    if role == "assistant":
+                    if message_type == "assistant":
                         text += f"[{token.text}]({card.image_url})"
                     else:
                         text += f"[{card.name}]({card.image_url})"
@@ -106,26 +127,24 @@ class ChatHistory:
 
         return text, filtered_cards
 
-    def create_message(
-        self, text: str, role: str, include_rules: bool = False
-    ) -> Message:
+    def create_message(self, text: str, message_type: str) -> Message:
         """Creates processed text (card names as urls), card data and rules data. Only includes card data that is written in the text."""
-        logger.info(f"creating message for {role}")
+        logger.info(f"creating {message_type} message")
 
         # add card data
-        if role == "assistant":
+        if message_type == "assistant":
             k = 15
         else:
             k = 5
         all_cards = self.data_service.get_cards(text, k=k)
 
         processed_text, matched_cards = self.replace_card_names_with_urls(
-            text=text, cards=all_cards, role=role
+            text=text, cards=all_cards, message_type=message_type
         )
 
         # add rules data
         rules = []
-        if include_rules:
+        if message_type == "rules":
             # get rules from rulebook
             rules = self.data_service.get_rules(text)
             # get rules from keywords
@@ -139,19 +158,24 @@ class ChatHistory:
         # create message
         message = Message(
             text=text,
-            role=role,
+            type=message_type,
             processed_text=processed_text,
             cards=matched_cards,
             rules=rules,
         )
+
+        # add additional cards
+        if message_type == "deckbuilding":
+            message = self.add_additional_cards(message=message, max_number_of_cards=10)
+
         logger.info(
-            f"message created with {len(matched_cards)} cards and {len(rules)} rules"
+            f"message created with {len(message.cards)} cards and {len(message.rules)} rules"
         )
 
         return message
 
-    def create_minimal_message(self, text: str, role: str) -> Message:
-        return Message(text=text, role=role, processed_text=text)
+    def create_minimal_message(self, text: str, type: str) -> Message:
+        return Message(text=text, type=type, processed_text=text)
 
     def add_additional_cards(
         self,
@@ -163,43 +187,61 @@ class ChatHistory:
         additional_cards = []
         for card in message.cards:
             # for each card in message get max_number_of_cards
-            additional_cards = self.data_service.get_cards(
-                card.to_text(include_price=False),
-                k=max_number_of_cards,  # TODO: could be more
-                threshold=threshold,
-                lasso_threshold=lasso_threshold,
-                sample_results=True,
+            additional_cards.extend(
+                self.data_service.get_cards(
+                    card.to_text(include_price=False),
+                    k=5,  # TODO: could be more
+                    threshold=threshold,
+                    lasso_threshold=lasso_threshold,
+                    sample_results=True,
+                )
             )
 
+        # choose cards
+        cards = []
         for card in additional_cards:
-            if card not in message.cards:
-                message.cards.append(card)
-                logger.debug(f"added additional card: {card.name}")
+            if card not in message.cards and not card in cards:
+                cards.append(card)
+        cards = random.choices(cards, k=min(len(cards), max_number_of_cards))
+
+        message.cards.extend(cards)
+        logger.debug(f"added {len(cards)} additional cards")
 
         return message
 
     def validate_answer(self, number_of_messages=4):
         message = self.chat[-1]
-        if message.role != "assistant":
+        if message.type != "assistant":
             logger.debug("last chat message is not from assistant")
             return
 
         rules = []
         for message in self.chat[-number_of_messages:]:
-            if message.role == "user" and message.rules:
-                rules.extend(message.rules)
-                for card in message.cards:
-                    rules.extend(card.rulings)
-                    for text in card.oracle.split("\n"):
-                        rules.append(
-                            Rule(text=text, chapter=card.name, rule_id="oracle text")
-                        )
+            rules.extend(message.rules)
+            for card in message.cards:
+                rules.extend(card.rulings)
+                for text in card.oracle.split("\n"):
+                    rules.append(
+                        Rule(text=text, chapter=card.name, rule_id="oracle text")
+                    )
+
+        filtered_rules = []
+        for rule in rules:
+            if rule.text not in [r.text for r in filtered_rules]:
+                filtered_rules.append(rule)
 
         logger.info(f"evaluating {len(rules)} against answer")
-        validation_text, score = self.data_service.validate_answer(message.text, rules)
+        validation_text, score = self.data_service.validate_answer(
+            message.text, filtered_rules
+        )
 
         logger.info(f"validation score {score:.2f}%")
 
         self.chat.append(
-            Message(validation_text, role="assistant", processed_text=validation_text)
+            Message(validation_text, type="assistant", processed_text=validation_text)
         )
+
+    def classify_intent(self, query) -> str:
+        """possible values: deckbuilding, rules, conversation, malevolent"""
+        intent = self.data_service.classify_intent(query)
+        return intent
