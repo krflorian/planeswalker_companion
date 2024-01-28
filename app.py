@@ -11,7 +11,7 @@ with open("configs/config.yaml", "r") as infile:
     config = yaml.load(infile, Loader=yaml.FullLoader)
 
 
-VERSION = "0.0.2"
+VERSION = "0.0.3"
 
 MODEL_NAME = config.get("llm_model_name", "gpt-4")
 logger.info(f"using model: {MODEL_NAME}")
@@ -24,6 +24,7 @@ I can help you with all kinds of questions regarding Magic the Gathering rules o
 FOOTER_TEXT = f"""
 Support Nissa on [Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)  
 version: {VERSION}
+model: {MODEL_NAME}
 """
 
 
