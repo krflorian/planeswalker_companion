@@ -98,24 +98,24 @@ class DataService:
         )[:3]
 
         # validation text
-        validation_text = []
-        validation_text.append(
-            "I could not find any relevant rules in my database. The most fitting are:"
-        )
+        validation_text = ["I could not find any relevant documents in my database."]
+        score = 0.0
         if relevant_documents:
-            if relevant_documents[0][0] >= 0.8:
-                validation_text.append(
-                    f"I am very confident in my answer ({relevant_documents[0][0]*100:.2f}%). It is based on:"
-                )
-            elif relevant_documents[0][0] >= 0.5:
-                validation_text.append(
-                    f"I am pretty sure this is true ({relevant_documents[0][0]*100:.2f}%). If you want to double check, my answer is based on:"
-                )
+            score = relevant_documents[0][0]
+            if score >= 0.8:
+                validation_text = [
+                    f"I am very confident in my answer ({score*100:.2f}%). It is based on:"
+                ]
+
+            elif score >= 0.5:
+                validation_text = [
+                    f"I am pretty sure this is true ({score*100:.2f}%). If you want to double check, my answer is based on:"
+                ]
 
         for score, doc in relevant_documents:
-            validation_text.append(f"[{doc.name}]({doc.url})")
-
-        return validation_text, relevant_documents[0][0]
+            validation_text.append(f"- [{doc.name}]({doc.url})")
+        validation_text = "\n".join(validation_text)
+        return validation_text, score
 
     def classify_intent(self, text: str) -> str:
         response = requests.post(

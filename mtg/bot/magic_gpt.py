@@ -4,6 +4,7 @@ from langchain.chains import LLMChain
 
 from mtg.utils.logging import get_logger
 from mtg.history import ChatHistory
+from mtg.objects import MessageType
 from .lang_chain import create_chains
 
 logger = get_logger(__name__)
@@ -52,9 +53,9 @@ class MagicGPT:
     def ask(self):
         try:
             topic = self.chat_history.conversation_topic
-            if topic == "deckbuilding":
+            if topic == MessageType.DECKBUILDING:
                 response_iterator = self._ask_deckbuilding_question()
-            elif topic == "rules":
+            elif topic == MessageType.RULES:
                 response_iterator = self._ask_rules_question()
             else:
                 response_iterator = self._ask_conversational_question()
@@ -62,11 +63,11 @@ class MagicGPT:
             # stream response
             for response in response_iterator:
                 message = self.chat_history.create_minimal_message(
-                    text=response, type="assistant"
+                    text=response, type=MessageType.ASSISTANT
                 )
                 if not self.chat_history.chat:
                     self.chat_history.chat.append(message)
-                elif self.chat_history.chat[-1].type != "assistant":
+                elif self.chat_history.chat[-1].type != MessageType.ASSISTANT:
                     self.chat_history.chat.append(message)
                 else:
                     self.chat_history.chat[-1] = message
@@ -75,7 +76,7 @@ class MagicGPT:
 
             # create final message
             message = self.chat_history.create_message(
-                response, message_type="assistant"
+                response, message_type=MessageType.ASSISTANT
             )
             self.chat_history.chat[-1] = message
             chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
@@ -86,7 +87,7 @@ class MagicGPT:
             yield chat
 
             # check rules
-            if topic == "rules":
+            if topic == MessageType.RULES:
                 self.chat_history.validate_answer()
                 chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
                 yield chat
@@ -145,6 +146,7 @@ class MagicGPT:
         rules_data = self.chat_history.get_rules_data()
 
         # TODO add rules data
+        print("starting stream...")
         partial_message = ""
         for response in self.rules_question_chat.stream(
             {

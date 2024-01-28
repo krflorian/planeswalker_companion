@@ -28,7 +28,7 @@ class ChatHistory:
         self.add_message(message)
 
     def add_assistant_message(self, text: str) -> None:
-        message = self.create_message(text, message_type="assistant")
+        message = self.create_message(text, message_type=MessageType.ASSISTANT)
         self.add_message(message)
 
     def clear(self):
@@ -59,10 +59,10 @@ class ChatHistory:
     def get_rules_data(self, number_of_messages=4) -> list[str]:
         rule_texts, rule_ids = [], set()
         for message in self.chat[-number_of_messages:]:
-            if message.type != "rules":
+            if message.type != MessageType.RULES:
                 continue
             for rule in message.rules:
-                if rule not in rule_ids:
+                if rule.name not in rule_ids:
                     rule_ids.add(rule.name)
                     rule_texts.append(rule.text)
             for card in message.cards:
@@ -87,8 +87,8 @@ class ChatHistory:
         chat = []
         last_message_type = None
         for message in self.chat[-number_of_messages:]:
-            if message.type == "assistant":
-                if not chat or (last_message_type == "assistant"):
+            if message.type == MessageType.ASSISTANT:
+                if not chat or (last_message_type == MessageType.ASSISTANT):
                     chat.append([None, message.processed_text])
                 else:
                     chat[-1].append(message.processed_text)
@@ -101,7 +101,7 @@ class ChatHistory:
             chat[-1].append(None)
         return chat
 
-    def replace_card_names_with_urls(self, text, cards, message_type="user") -> str:
+    def replace_card_names_with_urls(self, text, cards, message_type) -> str:
         """Find Card Names in text and replace them with their URL. Return only Cards that are found in the text."""
 
         if not cards:
@@ -119,10 +119,10 @@ class ChatHistory:
                 else:
                     if card not in filtered_cards:
                         filtered_cards.append(card)
-                    if message_type == "assistant":
-                        text += f"[{token.text}]({card.image_url})"
+                    if message_type == MessageType.ASSISTANT:
+                        text += f"[{token.text}]({card.url})"
                     else:
-                        text += f"[{card.name}]({card.image_url})"
+                        text += f"[{card.name}]({card.url})"
                 text += token.whitespace_
             else:
                 # add token as text
@@ -131,12 +131,12 @@ class ChatHistory:
 
         return text, filtered_cards
 
-    def create_message(self, text: str, message_type: str) -> Message:
+    def create_message(self, text: str, message_type: MessageType) -> Message:
         """Creates processed text (card names as urls), card data and rules data. Only includes card data that is written in the text."""
         logger.info(f"creating {message_type} message")
 
         # add card data
-        if message_type == "assistant":
+        if message_type == MessageType.ASSISTANT:
             k = 15
         else:
             k = 5
@@ -148,7 +148,7 @@ class ChatHistory:
 
         # add rules data
         rules = []
-        if message_type == "rules":
+        if message_type == MessageType.RULES:
             # get rules from rulebook
             rules = self.data_service.get_rules(text)
             # get rules from keywords
@@ -215,7 +215,7 @@ class ChatHistory:
 
     def validate_answer(self, number_of_messages=4):
         message = self.chat[-1]
-        if message.type != "assistant":
+        if message.type != MessageType.ASSISTANT:
             logger.debug("last chat message is not from assistant")
             return
 
@@ -248,10 +248,29 @@ class ChatHistory:
         logger.info(f"validation score {score:.2f}%")
 
         self.chat.append(
-            Message(validation_text, type="assistant", processed_text=validation_text)
+            Message(
+                validation_text,
+                type=MessageType.ASSISTANT,
+                processed_text=validation_text,
+            )
         )
 
-    def classify_intent(self, query) -> str:
+    def classify_intent(self, query) -> MessageType:
         """possible values: deckbuilding, rules, conversation, malevolent"""
+
+        def most_frequent(List):
+            return max(set(List), key=List.count)
+
+        history = [
+            message.type
+            for message in self.chat[-5:]
+            if message.type != MessageType.ASSISTANT
+        ]
+
         intent = self.data_service.classify_intent(query)
-        return intent
+        intent = MessageType(intent)
+
+        history.append(intent)
+        history.append(intent)
+
+        return most_frequent(history)
