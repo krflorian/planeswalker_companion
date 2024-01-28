@@ -1,6 +1,6 @@
 from pathlib import Path
 from pydantic import BaseModel, Field
-from .rule import Rule
+from .document import Document
 
 
 class Card(BaseModel):
@@ -9,13 +9,14 @@ class Card(BaseModel):
     mana_cost: str
     type: str
     oracle: str
-    image_url: str
     price: float
+    url: str
     power: str = "0"
     toughness: str = "0"
     color_identity: list[str] = Field(default_factory=list)
     keywords: list[str] = Field(default_factory=list)
-    rulings: list[Rule] = Field(default_factory=list)
+    rulings: list[Document] = Field(default_factory=list)
+    legalities: dict[str, str] = Field(default_factory=dict)
     _image: Path = None
 
     def __repr__(self) -> str:

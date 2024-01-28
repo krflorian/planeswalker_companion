@@ -1,7 +1,7 @@
 from enum import Enum
 from dataclasses import dataclass, field
 from .card import Card
-from .rule import Rule
+from .document import Document
 
 
 class MessageType(Enum):
@@ -18,4 +18,4 @@ class Message:
     type: MessageType
     processed_text: str
     cards: list[Card] = field(default_factory=list)
-    rules: list[Rule] = field(default_factory=list)
+    rules: list[Document] = field(default_factory=list)
