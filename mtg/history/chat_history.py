@@ -1,4 +1,4 @@
-from mtg.objects import Message, MessageType, Rule
+from mtg.objects import Message, MessageType, Document
 from mtg.utils.logging import get_logger
 from .spacy_utils import match_cards
 from .data_service import DataService
@@ -56,20 +56,24 @@ class ChatHistory:
             card_data = "No Card Data."
         return card_data
 
-    def get_rules_data(self, number_of_messages=4):
-        rules = []
+    def get_rules_data(self, number_of_messages=4) -> list[str]:
+        rule_texts, rule_ids = [], set()
         for message in self.chat[-number_of_messages:]:
-            if message.type == "rules":
-                rules.extend(message.rules)
-                for card in message.cards:
-                    rules.extend(card.rulings)
-        filtered_rules = []
-        for rule in rules:
-            if rule.text not in [r.text for r in filtered_rules]:
-                filtered_rules.append(rule)
+            if message.type != "rules":
+                continue
+            for rule in message.rules:
+                if rule not in rule_ids:
+                    rule_ids.add(rule.name)
+                    rule_texts.append(rule.text)
+            for card in message.cards:
+                if card.rulings and card.name not in rule_ids:
+                    rule_ids.add(card.name)
+                    rule_texts.append(f"Rulings for card {card.name}:")
+                    for rule in card.rulings:
+                        rule_texts.extend([rule.text for rule in card.rulings])
 
-        if filtered_rules:
-            return "\n".join([rule.to_text() for rule in filtered_rules])
+        if rule_texts:
+            return "\n".join(rule_texts)
         else:
             return "No Rules found"
 
@@ -215,24 +219,30 @@ class ChatHistory:
             logger.debug("last chat message is not from assistant")
             return
 
-        rules = []
+        documents, rule_ids = [], set()
         for message in self.chat[-number_of_messages:]:
-            rules.extend(message.rules)
+            # add message rules
+            for document in message.rules:
+                if document.name not in rule_ids:
+                    rule_ids.add(document.name)
+                    documents.append(document)
+            # add message cards
             for card in message.cards:
-                rules.extend(card.rulings)
-                for text in card.oracle.split("\n"):
-                    rules.append(
-                        Rule(text=text, chapter=card.name, rule_id="oracle text")
-                    )
+                if card.name not in rule_ids:
+                    rule_ids.add(card.name)
+                    documents.extend(card.rulings)
+                    for idx, text in enumerate(card.oracle.split("\n")):
+                        documents.append(
+                            Document(
+                                text=text,
+                                name=f"Oracle Text {idx} - {card.name}",
+                                url=card.url,
+                            )
+                        )
 
-        filtered_rules = []
-        for rule in rules:
-            if rule.text not in [r.text for r in filtered_rules]:
-                filtered_rules.append(rule)
-
-        logger.info(f"evaluating {len(rules)} against answer")
+        logger.info(f"evaluating {len(documents)} against answer")
         validation_text, score = self.data_service.validate_answer(
-            message.text, filtered_rules
+            message.text, documents
         )
 
         logger.info(f"validation score {score:.2f}%")

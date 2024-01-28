@@ -1,5 +1,5 @@
 import requests
-from mtg.objects import Card, Rule
+from mtg.objects import Card, Document
 from mtg.utils.logging import get_logger
 
 logger = get_logger(__name__)
@@ -16,7 +16,7 @@ class DataService:
         k: int = 5,
         threshold: float = 0.2,
         lasso_threshold: float = 0.05,
-    ):
+    ) -> list[Document]:
         response = requests.post(
             self.url + "rules/",
             json={
@@ -28,17 +28,15 @@ class DataService:
         )
         response = response.json()
 
-        rules = []
-        for rule in response:
-            rule_data = rule["rule"]
-            distance = rule["distance"]
-            rule = Rule(**rule_data)
-            logger.debug(
-                f"received rule {rule.rule_id} from chapter {rule.chapter} distance {distance:.2f}"
-            )
-            rules.append(rule)
+        documents = []
+        for resp in response:
+            document = resp["document"]
+            distance = resp["distance"]
+            document = Document(**document)
+            logger.debug(f"received rule {document.name} distance {distance:.2f}")
+            documents.append(document)
 
-        return rules
+        return documents
 
     def get_cards(
         self,
@@ -70,45 +68,54 @@ class DataService:
 
         return cards
 
-    def validate_answer(self, answer: str, rules: list[Rule]) -> tuple[str, float]:
-        if not rules:
+    def validate_answer(
+        self, answer: str, documents: list[Document]
+    ) -> tuple[str, float]:
+        if not documents:
             return (
                 "I could not find any relevant rules for this question",
                 0.0,
             )
 
-        rule_texts = [rule.to_text() for rule in rules]
         response = requests.post(
             self.url + "hallucination/",
             json={
                 "text": answer,
-                "chunks": rule_texts,
+                "chunks": [doc.text for doc in documents],
             },
         )
         response = response.json()
-        relevant_rules = []
+        relevant_documents = []
         for idx, chunk in enumerate(response):
             logger.debug(
-                f"hallucination score: {chunk['score']:2f}, ID: {rules[idx].rule_id} {rules[idx].chapter}"
+                f"hallucination score: {chunk['score']:2f}, ID: {documents[idx].name}"
             )
-            relevant_rules.append((chunk["score"], rules[idx]))
-        relevant_rules = sorted(relevant_rules, key=lambda x: x[0], reverse=True)[:3]
+            relevant_documents.append((chunk["score"], documents[idx]))
 
-        if relevant_rules[0][0] >= 0.8:
-            validation_text = f"I am very confident in my answer ({relevant_rules[0][0]*100:.2f}%). It is based on: \n"
-        elif relevant_rules[0][0] >= 0.5:
-            validation_text = f"I am pretty sure this is true ({relevant_rules[0][0]*100:.2f}%). If you want to double check, my answer is based on: \n"
-        else:
-            validation_text = "I could not find any relevant rules in my database. The most fitting are: \n"
+        relevant_documents = [doc for doc in relevant_documents if doc[0] >= 0.5]
+        relevant_documents = sorted(
+            relevant_documents, key=lambda x: x[0], reverse=True
+        )[:3]
 
-        # TODO threshold for relevant rules
-        for score, rule in relevant_rules:
-            validation_text += f" - {rule.chapter}: "
-            if rule.subchapter:
-                validation_text += f"{rule.subchapter}, "
-            validation_text += f"{rule.rule_id}\n"
+        # validation text
+        validation_text = []
+        validation_text.append(
+            "I could not find any relevant rules in my database. The most fitting are:"
+        )
+        if relevant_documents:
+            if relevant_documents[0][0] >= 0.8:
+                validation_text.append(
+                    f"I am very confident in my answer ({relevant_documents[0][0]*100:.2f}%). It is based on:"
+                )
+            elif relevant_documents[0][0] >= 0.5:
+                validation_text.append(
+                    f"I am pretty sure this is true ({relevant_documents[0][0]*100:.2f}%). If you want to double check, my answer is based on:"
+                )
 
-        return validation_text, relevant_rules[0][0]
+        for score, doc in relevant_documents:
+            validation_text.append(f"[{doc.name}]({doc.url})")
+
+        return validation_text, relevant_documents[0][0]
 
     def classify_intent(self, text: str) -> str:
         response = requests.post(
