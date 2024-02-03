@@ -95,7 +95,7 @@ class DataService:
         relevant_documents = [doc for doc in relevant_documents if doc[0] >= 0.5]
         relevant_documents = sorted(
             relevant_documents, key=lambda x: x[0], reverse=True
-        )[:3]
+        )[:5]
 
         # validation text
         validation_text = ["I could not find any relevant documents in my database."]
