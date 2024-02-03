@@ -23,8 +23,8 @@ I can help you with all kinds of questions regarding Magic the Gathering rules o
 
 FOOTER_TEXT = f"""
 Support Nissa on [Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)  
-version: {VERSION}
-model: {MODEL_NAME}
+version: {VERSION}  
+model: {MODEL_NAME}  
 """
 
 
@@ -37,7 +37,7 @@ def get_magic_bot() -> MagicGPT:
         ),
         model=MODEL_NAME,
         temperature_deck_building=0.7,
-        max_token_limit=2000,
+        max_token_limit=1000,
     )
     return magic_bot
 

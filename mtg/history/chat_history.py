@@ -258,19 +258,7 @@ class ChatHistory:
     def classify_intent(self, query) -> MessageType:
         """possible values: deckbuilding, rules, conversation, malevolent"""
 
-        def most_frequent(List):
-            return max(set(List), key=List.count)
-
-        history = [
-            message.type
-            for message in self.chat[-5:]
-            if message.type != MessageType.ASSISTANT
-        ]
-
         intent = self.data_service.classify_intent(query)
         intent = MessageType(intent)
 
-        history.append(intent)
-        history.append(intent)
-
-        return most_frequent(history)
+        return intent
