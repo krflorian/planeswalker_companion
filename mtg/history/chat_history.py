@@ -1,8 +1,12 @@
+import random
+import json
+from uuid import uuid4
+from pathlib import Path
+
 from mtg.objects import Message, MessageType, Document
 from mtg.utils.logging import get_logger
 from .spacy_utils import match_cards
 from .data_service import DataService
-import random
 
 logger = get_logger(__name__)
 
@@ -11,6 +15,7 @@ class ChatHistory:
     def __init__(self, data_service_host: str = "127.0.0.1"):
         self.chat: list[Message] = []
         self.data_service = DataService(host=data_service_host)
+        self.intent = MessageType.CONVERSATION
 
     @property
     def conversation_topic(self):
@@ -23,7 +28,10 @@ class ChatHistory:
         self.chat.append(message)
 
     def add_user_message(self, query: str) -> None:
-        intent = self.classify_intent(query)
+        message_texts = [message.to_string() for message in self.chat[-5:]]
+        message_texts.append(f"User: {query}")
+
+        intent = self.classify_intent("\n".join(message_texts))
         message = self.create_message(query, message_type=intent)
         self.add_message(message)
 
@@ -33,6 +41,16 @@ class ChatHistory:
 
     def clear(self):
         self.chat = []
+
+    def dump(self, filepath: Path):
+        filename = filepath / f"{str(uuid4())}.json"
+        logger.info(f"saving chat in {filename}")
+        with filename.open("w", encoding="utf-8") as outfile:
+            json.dump(
+                [message.to_dict() for message in self.chat],
+                outfile,
+                ensure_ascii=False,
+            )
 
     def get_card_data(
         self,
@@ -169,7 +187,7 @@ class ChatHistory:
         )
 
         # add additional cards
-        if message_type == "deckbuilding":
+        if message_type == MessageType.DECKBUILDING:
             message = self.add_additional_cards(message=message, max_number_of_cards=10)
 
         logger.info(
@@ -188,6 +206,7 @@ class ChatHistory:
         threshold: float = 0.5,
         lasso_threshold: float = 0.03,
     ) -> Message:
+
         additional_cards = []
         for card in message.cards:
             # for each card in message get max_number_of_cards
@@ -201,6 +220,17 @@ class ChatHistory:
                 )
             )
 
+        # from message
+        additional_cards.extend(
+            self.data_service.get_cards(
+                message.text,
+                k=max(10, max_number_of_cards),
+                threshold=threshold,
+                lasso_threshold=lasso_threshold,
+                sample_results=True,
+            )
+        )
+
         # choose cards
         cards = []
         for card in additional_cards:
@@ -208,6 +238,7 @@ class ChatHistory:
                 cards.append(card)
         cards = random.choices(cards, k=min(len(cards), max_number_of_cards))
 
+        # add additional cards
         message.cards.extend(cards)
         logger.debug(f"added {len(cards)} additional cards")
 
@@ -232,6 +263,8 @@ class ChatHistory:
                     rule_ids.add(card.name)
                     documents.extend(card.rulings)
                     for idx, text in enumerate(card.oracle.split("\n")):
+                        if text == "":
+                            continue
                         documents.append(
                             Document(
                                 text=text,
@@ -255,10 +288,10 @@ class ChatHistory:
             )
         )
 
-    def classify_intent(self, query) -> MessageType:
+    def classify_intent(self, chat: str) -> MessageType:
         """possible values: deckbuilding, rules, conversation, malevolent"""
 
-        intent = self.data_service.classify_intent(query)
+        intent = self.data_service.classify_intent(chat)
         intent = MessageType(intent)
-
+        self.intent = intent
         return intent
