@@ -10,3 +10,6 @@ class Document(BaseModel):
 
     def __repr__(self):
         return f"Document({self.name})"
+
+    def to_dict(self):
+        return self.model_dump()

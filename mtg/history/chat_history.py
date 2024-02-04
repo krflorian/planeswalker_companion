@@ -186,7 +186,7 @@ class ChatHistory:
         )
 
         # add additional cards
-        if message_type == "deckbuilding":
+        if message_type == MessageType.DECKBUILDING:
             message = self.add_additional_cards(message=message, max_number_of_cards=10)
 
         logger.info(
@@ -205,6 +205,7 @@ class ChatHistory:
         threshold: float = 0.5,
         lasso_threshold: float = 0.03,
     ) -> Message:
+
         additional_cards = []
         for card in message.cards:
             # for each card in message get max_number_of_cards
@@ -218,6 +219,17 @@ class ChatHistory:
                 )
             )
 
+        # from message
+        additional_cards.extend(
+            self.data_service.get_cards(
+                message.text,
+                k=max(10, max_number_of_cards),
+                threshold=threshold,
+                lasso_threshold=lasso_threshold,
+                sample_results=True,
+            )
+        )
+
         # choose cards
         cards = []
         for card in additional_cards:
@@ -225,6 +237,7 @@ class ChatHistory:
                 cards.append(card)
         cards = random.choices(cards, k=min(len(cards), max_number_of_cards))
 
+        # add additional cards
         message.cards.extend(cards)
         logger.debug(f"added {len(cards)} additional cards")
 

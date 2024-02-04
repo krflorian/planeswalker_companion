@@ -1,5 +1,6 @@
 import gradio
 import yaml
+from pathlib import Path
 
 from mtg.bot import MagicGPT
 from mtg.history.chat_history import ChatHistory
@@ -38,7 +39,7 @@ def get_magic_bot() -> MagicGPT:
         model=MODEL_NAME,
         temperature_deck_building=0.7,
         max_token_limit=1000,
-        data_filepath=config.get("message_filepath", "data/messages"),
+        data_filepath=Path(config.get("message_filepath", "data/messages")),
     )
     return magic_bot
 

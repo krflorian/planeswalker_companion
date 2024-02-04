@@ -24,6 +24,6 @@ class Message:
         return {
             "text": self.text,
             "type": str(self.type),
-            "cards": [asdict(card) for card in self.cards],
-            "rules": [asdict(rule) for rule in self.rules],
+            "cards": [card.to_dict() for card in self.cards],
+            "rules": [rule.to_dict() for rule in self.rules],
         }

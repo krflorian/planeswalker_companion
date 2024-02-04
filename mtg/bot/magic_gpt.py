@@ -32,8 +32,8 @@ class MagicGPT:
         )
 
         self.data_filepath: Path = data_filepath
-        (self.data_filepath / "liked").mkdir(exist_ok=True)
-        (self.data_filepath / "disliked").mkdir(exist_ok=True)
+        (self.data_filepath / "liked").mkdir(exist_ok=True, parents=True)
+        (self.data_filepath / "disliked").mkdir(exist_ok=True, parents=True)
 
         self.chat_history: ChatHistory = chat_history
         self.memory = memory
