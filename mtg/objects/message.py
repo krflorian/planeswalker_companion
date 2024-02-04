@@ -27,3 +27,8 @@ class Message:
             "cards": [card.to_dict() for card in self.cards],
             "rules": [rule.to_dict() for rule in self.rules],
         }
+
+    def to_string(self):
+        if self.type == MessageType.ASSISTANT:
+            return f"Assistant: {self.text}"
+        return f"User: {self.text}"

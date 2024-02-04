@@ -152,8 +152,6 @@ class MagicGPT:
         )
         rules_data = self.chat_history.get_rules_data()
 
-        # TODO add rules data
-        print("starting stream...")
         partial_message = ""
         for response in self.rules_question_chat.stream(
             {

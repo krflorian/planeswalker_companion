@@ -98,7 +98,9 @@ class DataService:
         )[:5]
 
         # validation text
-        validation_text = ["I could not find any relevant documents in my database."]
+        validation_text = [
+            "Attention! The documents I found do not match with my answer."
+        ]
         score = 0.0
         if relevant_documents:
             score = relevant_documents[0][0]
@@ -112,8 +114,14 @@ class DataService:
                     f"I am pretty sure this is true ({score*100:.2f}%). If you want to double check, my answer is based on:"
                 ]
 
-        for score, doc in relevant_documents:
-            validation_text.append(f"- [{doc.name}]({doc.url})")
+            for score, doc in relevant_documents:
+                validation_text.append(f"- [{doc.name}]({doc.url})")
+
+        else:
+            for doc in documents:
+                validation_text.append(f"- [{doc.name}]({doc.url})")
+
+        # finish text
         validation_text = "\n".join(validation_text)
         return validation_text, score
 

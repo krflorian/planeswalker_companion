@@ -28,9 +28,10 @@ class ChatHistory:
         self.chat.append(message)
 
     def add_user_message(self, query: str) -> None:
-        intent = self.classify_intent(
-            query  # TODO should be chat instead of last message
-        )
+        message_texts = [message.to_string() for message in self.chat[-5:]]
+        message_texts.append(f"User: {query}")
+
+        intent = self.classify_intent("\n".join(message_texts))
         message = self.create_message(query, message_type=intent)
         self.add_message(message)
 
@@ -262,6 +263,8 @@ class ChatHistory:
                     rule_ids.add(card.name)
                     documents.extend(card.rulings)
                     for idx, text in enumerate(card.oracle.split("\n")):
+                        if text == "":
+                            continue
                         documents.append(
                             Document(
                                 text=text,
@@ -285,10 +288,10 @@ class ChatHistory:
             )
         )
 
-    def classify_intent(self, query) -> MessageType:
+    def classify_intent(self, chat: str) -> MessageType:
         """possible values: deckbuilding, rules, conversation, malevolent"""
 
-        intent = self.data_service.classify_intent(query)
+        intent = self.data_service.classify_intent(chat)
         intent = MessageType(intent)
         self.intent = intent
         return intent
