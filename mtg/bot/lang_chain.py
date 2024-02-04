@@ -1,6 +1,3 @@
-# %%
-from typing import Literal
-
 from langchain_openai import ChatOpenAI
 from langchain.prompts import (
     ChatPromptTemplate,
@@ -9,10 +6,6 @@ from langchain.prompts import (
 )
 from langchain.schema import SystemMessage
 from langchain.memory import ConversationTokenBufferMemory
-
-from langchain.pydantic_v1 import BaseModel
-from langchain.output_parsers.openai_functions import PydanticAttrOutputFunctionsParser
-from langchain.utils.openai_functions import convert_pydantic_to_openai_function
 from langchain.schema.runnable import RunnableLambda, RunnablePassthrough
 from operator import itemgetter
 
@@ -25,16 +18,20 @@ logger = get_logger(__name__)
 
 CONVERSATIONAL_SYSTEM_MESSAGE = """
 You are Nissa a friendly Magic the Gathering Assistant. You can talk to the user about general Magic: the Gathering related topics.
-If you recognize malicious intent in the user question tell him in a friendly way your intended use is deck building and rule advice regarding Magic: the Gathering. 
+If you recognize malicious intent in the user question tell him in a friendly way your intended use is deck building and rule advice for Magic: the Gathering. 
 Only answer questions regarding Magic the Gathering.
 """
 
 CONVERSATIONAL_PROMPT = """
 Card data: {card_data}
 
-Remember:  Do not answer questions unrelated to Magic the Gathering. Under no circumstances can you answer questions regarding Yu-Gi-Oh, Pokemon or other trading card games.
+Remember:  Do not answer questions unrelated to Magic the Gathering.
+Under no circumstances can you answer questions regarding Yu-Gi-Oh, Pokemon or other trading card games.
+If the User Intent is MALICIOUS do not answer the quesiton. Tell him in a friendly way your intended use is deck building and rule advice for Magic: the Gathering.
 
-{human_input}
+User Intent: {user_intent}
+
+User: {human_input}
 """
 
 
@@ -71,13 +68,6 @@ Remember: Do not answer questions unrelated to Magic the Gathering. Under no cir
 
 {human_input}
 """
-
-
-class TopicClassifier(BaseModel):
-    "You are a Magic the Gathering Assistant classify the topic of the user question"
-
-    topic: Literal["deck building", "rules question", "other"]
-    "The topic of the user question. The user can either ask about deck building advice or he has a question about a Magic the Gathering rule. Other questions include greetings and questions unrelated to Magic the gathering."
 
 
 def create_chains(

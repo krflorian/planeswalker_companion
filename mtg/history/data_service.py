@@ -102,7 +102,7 @@ class DataService:
         score = 0.0
         if relevant_documents:
             score = relevant_documents[0][0]
-            if score >= 0.8:
+            if score >= 0.8 and len(relevant_documents) > 1:
                 validation_text = [
                     f"I am very confident in my answer ({score*100:.2f}%). It is based on:"
                 ]

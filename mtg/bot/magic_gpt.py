@@ -1,5 +1,4 @@
-from datetime import datetime
-
+from pathlib import Path
 from langchain.chains import LLMChain
 
 from mtg.utils.logging import get_logger
@@ -18,6 +17,7 @@ class MagicGPT:
         temperature_deck_building: int = 0.7,
         max_token_limit: int = 3000,
         max_responses: int = 1,
+        data_filepath: Path = Path("data/messages"),
     ):
         (
             conversational_chat,
@@ -31,7 +31,10 @@ class MagicGPT:
             max_responses=max_responses,
         )
 
-        self._last_updated: datetime = datetime.now()
+        self.data_filepath: Path = data_filepath
+        (self.data_filepath / "liked").mkdir(exist_ok=True)
+        (self.data_filepath / "disliked").mkdir(exist_ok=True)
+
         self.chat_history: ChatHistory = chat_history
         self.memory = memory
         self.conversational_chat: LLMChain = conversational_chat
@@ -114,7 +117,11 @@ class MagicGPT:
 
         partial_message = ""
         for response in self.conversational_chat.stream(
-            {"human_input": self.chat_history.chat[-1].text, "card_data": card_data}
+            {
+                "human_input": self.chat_history.chat[-1].text,
+                "card_data": card_data,
+                "user_intent": self.chat_history.intent,
+            }
         ):
             partial_message += response.content
             yield partial_message
@@ -157,3 +164,10 @@ class MagicGPT:
         ):
             partial_message += response.content
             yield partial_message
+
+    def save_chat(self, liked: bool, message_index: list[int]) -> None:
+        print("message index ", message_index)
+        if liked:
+            self.chat_history.dump(self.data_filepath / "liked")
+        else:
+            self.chat_history.dump(self.data_filepath / "disliked")

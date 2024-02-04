@@ -38,6 +38,7 @@ def get_magic_bot() -> MagicGPT:
         model=MODEL_NAME,
         temperature_deck_building=0.7,
         max_token_limit=1000,
+        data_filepath=config.get("message_filepath", "data/messages"),
     )
     return magic_bot
 
@@ -66,11 +67,16 @@ def clear_memory(magic_bot: MagicGPT):
     magic_bot.clear_memory()
 
 
+def up_vote(magic_bot: MagicGPT, like_state: gradio.LikeData):
+    magic_bot.save_chat(liked=like_state.liked, message_index=like_state.index)
+    return
+
+
 # creates a new Blocks app and assigns it to the variable demo.
 with gradio.Blocks() as ui:
     gradio.Markdown(HEADER_TEXT)
     # chat
-    chat = gradio.Chatbot()
+    chat = gradio.Chatbot(likeable=True)
 
     magic_bot = gradio.State(get_magic_bot)
     user_message = gradio.State("")
@@ -112,5 +118,8 @@ with gradio.Blocks() as ui:
 
     # clear button
     clear_btn.click(clear_memory, inputs=[magic_bot])
+
+    # upvote button
+    chat.like(up_vote, [magic_bot], outputs=[txt])
 
 ui.launch()

@@ -1,8 +1,12 @@
+import random
+import json
+from uuid import uuid4
+from pathlib import Path
+
 from mtg.objects import Message, MessageType, Document
 from mtg.utils.logging import get_logger
 from .spacy_utils import match_cards
 from .data_service import DataService
-import random
 
 logger = get_logger(__name__)
 
@@ -11,6 +15,7 @@ class ChatHistory:
     def __init__(self, data_service_host: str = "127.0.0.1"):
         self.chat: list[Message] = []
         self.data_service = DataService(host=data_service_host)
+        self.intent = MessageType.CONVERSATION
 
     @property
     def conversation_topic(self):
@@ -23,7 +28,9 @@ class ChatHistory:
         self.chat.append(message)
 
     def add_user_message(self, query: str) -> None:
-        intent = self.classify_intent(query)
+        intent = self.classify_intent(
+            query  # TODO should be chat instead of last message
+        )
         message = self.create_message(query, message_type=intent)
         self.add_message(message)
 
@@ -33,6 +40,16 @@ class ChatHistory:
 
     def clear(self):
         self.chat = []
+
+    def dump(self, filepath: Path):
+        filename = filepath / f"{str(uuid4())}.json"
+        logger.info(f"saving chat in {filename}")
+        with filename.open("w", encoding="utf-8") as outfile:
+            json.dump(
+                [message.to_dict() for message in self.chat],
+                outfile,
+                ensure_ascii=False,
+            )
 
     def get_card_data(
         self,
@@ -260,5 +277,5 @@ class ChatHistory:
 
         intent = self.data_service.classify_intent(query)
         intent = MessageType(intent)
-
+        self.intent = intent
         return intent
