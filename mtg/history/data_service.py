@@ -124,16 +124,3 @@ class DataService:
         # finish text
         validation_text = "\n".join(validation_text)
         return validation_text, score
-
-    def classify_intent(self, text: str) -> str:
-        response = requests.post(
-            self.url + "nli/",
-            json={
-                "text": text,
-            },
-        )
-        response = response.json()
-        logger.info(
-            f"question classified as {response['intent']}: {response['score']:.2f}"
-        )
-        return response["intent"]

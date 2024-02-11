@@ -14,8 +14,8 @@ COPY ./requirements.txt /app
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 # copy source code to workingdir 
-COPY ./app.py /app/app.py
 COPY ./mtg /app/mtg
+COPY ./app.py /app/app.py
 
 #create non-root user and change /app permissions
 RUN chmod -R 555 /app
