@@ -27,12 +27,8 @@ class ChatHistory:
     def add_message(self, message: Message):
         self.chat.append(message)
 
-    def add_user_message(self, query: str) -> None:
-        message_texts = [message.to_string() for message in self.chat[-5:]]
-        message_texts.append(f"User: {query}")
-
-        intent = self.classify_intent("\n".join(message_texts))
-        message = self.create_message(query, message_type=intent)
+    def add_user_message(self, query: str, message_type: MessageType) -> None:
+        message = self.create_message(query, message_type=message_type)
         self.add_message(message)
 
     def add_assistant_message(self, text: str) -> None:
@@ -287,11 +283,3 @@ class ChatHistory:
                 processed_text=validation_text,
             )
         )
-
-    def classify_intent(self, chat: str) -> MessageType:
-        """possible values: deckbuilding, rules, conversation, malevolent"""
-
-        intent = self.data_service.classify_intent(chat)
-        intent = MessageType(intent)
-        self.intent = intent
-        return intent

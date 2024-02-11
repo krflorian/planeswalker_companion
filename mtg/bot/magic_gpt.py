@@ -4,7 +4,8 @@ from langchain.chains import LLMChain
 from mtg.utils.logging import get_logger
 from mtg.history import ChatHistory
 from mtg.objects import MessageType
-from .lang_chain import create_chains
+from mtg.bot import mtg_chain
+from mtg.bot.intent_classification import create_intent_classifier, INTENT_MAPPER
 
 logger = get_logger(__name__)
 
@@ -13,23 +14,31 @@ class MagicGPT:
     def __init__(
         self,
         chat_history: ChatHistory,
-        model: str = "gpt-3.5-turbo",
+        model_rules: str = "gpt-4-0125-preview",
+        model_deckbuilding: str = "gpt-3.5-turbo",
         temperature_deck_building: int = 0.7,
         max_token_limit: int = 3000,
-        max_responses: int = 1,
         data_filepath: Path = Path("data/messages"),
     ):
-        (
-            conversational_chat,
-            deckbuilding_chat,
-            rules_question_chat,
-            memory,
-        ) = create_chains(
-            model=model,
-            temperature_deck_building=temperature_deck_building,
-            max_token_limit=max_token_limit,
-            max_responses=max_responses,
+
+        # setup base models
+        rules_llm = mtg_chain.create_llm(model_name=model_rules, temperature=1.0)
+        deckbuilding_llm = mtg_chain.create_llm(
+            model_name=model_deckbuilding, temperature=temperature_deck_building
         )
+        memory = mtg_chain.create_chat_memory(
+            llm=deckbuilding_llm, max_token_limit=max_token_limit
+        )
+
+        # setup chains
+        conversation_chain = mtg_chain.create_conversation_chain(
+            llm=deckbuilding_llm, memory=memory
+        )
+        rules_chain = mtg_chain.create_rules_chain(llm=rules_llm, memory=memory)
+        deckbuilding_chain = mtg_chain.create_deckbuilding_chain(
+            llm=deckbuilding_llm, memory=memory
+        )
+        classifier = create_intent_classifier(llm=deckbuilding_llm)
 
         self.data_filepath: Path = data_filepath
         (self.data_filepath / "liked").mkdir(exist_ok=True, parents=True)
@@ -37,9 +46,10 @@ class MagicGPT:
 
         self.chat_history: ChatHistory = chat_history
         self.memory = memory
-        self.conversational_chat: LLMChain = conversational_chat
-        self.deckbuilding_chat: LLMChain = deckbuilding_chat
-        self.rules_question_chat: LLMChain = rules_question_chat
+        self.conversational_chat: LLMChain = conversation_chain
+        self.deckbuilding_chat: LLMChain = deckbuilding_chain
+        self.rules_question_chat: LLMChain = rules_chain
+        self.intent_classifier: LLMChain = classifier
         self.conversation_topic: str = None  # TODO should be ENUM
 
     def clear_memory(self):
@@ -48,7 +58,9 @@ class MagicGPT:
         logger.info("memory cleared")
 
     def process_user_query(self, query):
-        self.chat_history.add_user_message(query)
+        intent = self.intent_classifier.invoke(query)
+        message_type = INTENT_MAPPER.get(intent, MessageType.CONVERSATION)
+        self.chat_history.add_user_message(query, message_type)
         chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
 
         return chat

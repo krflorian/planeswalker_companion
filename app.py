@@ -12,20 +12,23 @@ with open("configs/config.yaml", "r") as infile:
     config = yaml.load(infile, Loader=yaml.FullLoader)
 
 
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 
-MODEL_NAME = config.get("llm_model_name", "gpt-4")
-logger.info(f"using model: {MODEL_NAME}")
+DECKBUILDING_MODEL_NAME = config.get("llm_model_name_deckbuilding", "gpt-3.5-turbo")
+RUKES_MODEL_NAME = config.get("llm_model_name_rules", "gpt-4-0125-preview")
 
 HEADER_TEXT = """
 # Hi, I'm Nissa! 
-I can help you with all kinds of questions regarding Magic the Gathering rules or help you with brewing a new deck.
+I can help you with all kinds of questions regarding Magic: the Gathering rules or help you with brewing a new deck.  
+I will never save any user data. To help enhance my training and development, feel free to use the like/dislike button to save messages.  
+[Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)  
 """
 
 FOOTER_TEXT = f"""
 Support Nissa on [Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)  
 version: {VERSION}  
-model: {MODEL_NAME}  
+deckbuilding model: {DECKBUILDING_MODEL_NAME}  
+rules model: {RUKES_MODEL_NAME}  
 """
 
 
@@ -36,7 +39,8 @@ def get_magic_bot() -> MagicGPT:
         chat_history=ChatHistory(
             data_service_host=config.get("data_service_host", "127.0.0.1")
         ),
-        model=MODEL_NAME,
+        model_deckbuilding=DECKBUILDING_MODEL_NAME,
+        model_rules=RUKES_MODEL_NAME,
         temperature_deck_building=0.7,
         max_token_limit=1000,
         data_filepath=Path(config.get("message_filepath", "data/raw/messages")),
