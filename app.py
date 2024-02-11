@@ -19,7 +19,9 @@ RUKES_MODEL_NAME = config.get("llm_model_name_rules", "gpt-4-0125-preview")
 
 HEADER_TEXT = """
 # Hi, I'm Nissa! 
-I can help you with all kinds of questions regarding Magic the Gathering rules or help you with brewing a new deck.
+I can help you with all kinds of questions regarding Magic: the Gathering rules or help you with brewing a new deck.  
+I will never save any user data. To help enhance my training and development, feel free to use the like/dislike button to save messages.  
+[Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)  
 """
 
 FOOTER_TEXT = f"""
