@@ -12,7 +12,7 @@ with open("configs/config.yaml", "r") as infile:
     config = yaml.load(infile, Loader=yaml.FullLoader)
 
 
-VERSION = "0.0.3"
+VERSION = "0.0.4"
 
 DECKBUILDING_MODEL_NAME = config.get("llm_model_name_deckbuilding", "gpt-3.5-turbo")
 RUKES_MODEL_NAME = config.get("llm_model_name_rules", "gpt-4-0125-preview")
@@ -25,7 +25,7 @@ I can help you with all kinds of questions regarding Magic the Gathering rules o
 FOOTER_TEXT = f"""
 Support Nissa on [Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)  
 version: {VERSION}  
-decbuilding model: {DECKBUILDING_MODEL_NAME}  
+deckbuilding model: {DECKBUILDING_MODEL_NAME}  
 rules model: {RUKES_MODEL_NAME}  
 """
 
