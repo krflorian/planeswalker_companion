@@ -71,23 +71,37 @@ class ChatHistory:
         return card_data
 
     def get_rules_data(self, number_of_messages=4) -> list[str]:
-        rule_texts, rule_ids = [], set()
+        rules, rule_ids = [], set()
         for message in self.chat[-number_of_messages:]:
             if message.type != MessageType.RULES:
                 continue
             for rule in message.rules:
                 if rule.name not in rule_ids:
                     rule_ids.add(rule.name)
-                    rule_texts.append(rule.text)
+                    rules.append(rule)
             for card in message.cards:
                 if card.rulings and card.name not in rule_ids:
                     rule_ids.add(card.name)
-                    rule_texts.append(f"Rulings for card {card.name}:")
                     for rule in card.rulings:
-                        rule_texts.extend([rule.text for rule in card.rulings])
+                        rules.extend([rule for rule in card.rulings])
 
+        # separate origins
+        origin_2_rule = {}
+        for rule in rules:
+            origin = rule.metadata.get("origin", "other rules:")
+            if origin not in origin_2_rule:
+                origin_2_rule[origin] = []
+            origin_2_rule[origin].append(rule.text)
+
+        # merge texts
+        rule_texts = ""
+        for origin, texts in origin_2_rule.items():
+            rule_texts += origin + ":\n"
+            for text in texts:
+                rule_texts += f"{text}\n"
+        print(rule_texts)
         if rule_texts:
-            return "\n".join(rule_texts)
+            return rule_texts
         else:
             return "No Rules found"
 
@@ -150,11 +164,7 @@ class ChatHistory:
         logger.info(f"creating {message_type} message")
 
         # add card data
-        if message_type == MessageType.ASSISTANT:
-            k = 15
-        else:
-            k = 5
-        all_cards = self.data_service.get_cards(text, k=k)
+        all_cards = self.data_service.get_cards(text, k=10)
 
         processed_text, matched_cards = self.replace_card_names_with_urls(
             text=text, cards=all_cards, message_type=message_type

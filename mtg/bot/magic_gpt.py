@@ -38,7 +38,7 @@ class MagicGPT:
         deckbuilding_chain = mtg_chain.create_deckbuilding_chain(
             llm=deckbuilding_llm, memory=memory
         )
-        classifier = create_intent_classifier(llm=deckbuilding_llm)
+        classifier = create_intent_classifier(llm=rules_llm)
 
         self.data_filepath: Path = data_filepath
         (self.data_filepath / "liked").mkdir(exist_ok=True, parents=True)
@@ -58,7 +58,8 @@ class MagicGPT:
         logger.info("memory cleared")
 
     def process_user_query(self, query):
-        intent = self.intent_classifier.invoke(query)
+        # TODO full chat should be classified
+        intent = self.intent_classifier.invoke("User: " + query)
         message_type = INTENT_MAPPER.get(intent, MessageType.CONVERSATION)
         self.chat_history.add_user_message(query, message_type)
         chat = self.chat_history.get_human_readable_chat(number_of_messages=6)
