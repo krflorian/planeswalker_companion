@@ -164,11 +164,7 @@ class ChatHistory:
         logger.info(f"creating {message_type} message")
 
         # add card data
-        if message_type == MessageType.ASSISTANT:
-            k = 15
-        else:
-            k = 5
-        all_cards = self.data_service.get_cards(text, k=k)
+        all_cards = self.data_service.get_cards(text, k=10)
 
         processed_text, matched_cards = self.replace_card_names_with_urls(
             text=text, cards=all_cards, message_type=message_type
