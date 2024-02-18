@@ -99,7 +99,6 @@ class ChatHistory:
             rule_texts += origin + ":\n"
             for text in texts:
                 rule_texts += f"{text}\n"
-        print(rule_texts)
         if rule_texts:
             return rule_texts
         else:
