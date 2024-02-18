@@ -39,7 +39,6 @@ def load_spacy_model(cards: list[str]):
     matcher = FuzzyMatcher(nlp.vocab, fuzzy_func="quick", min_r1=80, min_r2=80)
 
     # set up matcher
-    print("setting up matcher...")
     docs = nlp.pipe(cards)
     for doc, card_name in zip(docs, cards):
         card_docs = [doc]

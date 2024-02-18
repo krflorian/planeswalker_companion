@@ -22,7 +22,6 @@ INTENT_MAPPER = {
 }
 
 
-#   what happens when i attack with a 5/5 creature with trample and deathtouch and my opponent blocks with a 1/4 creature?
 class TopicClassifier(BaseModel):
     """
     This classifier organizes user queries for a Magic the Gathering Assistant into specific topics for precise responses. The topics are:

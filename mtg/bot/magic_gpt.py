@@ -177,7 +177,6 @@ class MagicGPT:
             yield partial_message
 
     def save_chat(self, liked: bool, message_index: list[int]) -> None:
-        print("message index ", message_index)
         if liked:
             self.chat_history.dump(self.data_filepath / "liked")
         else:
