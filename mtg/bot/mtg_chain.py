@@ -52,16 +52,17 @@ def create_rules_chain(
     Let`s think step by step how the ruling in context is relevant to the question. Give a short and precise answer that is based on magic the gathering rules. 
     If there are no rules in the rules section that are relevant to the question tell the user you did not find relevant rules. 
     Only answer questions regarding Magic the Gathering.
-
-    Card data: {card_data}
-
-    Rules: {rules_data}
     """
 
     RULES_QUESTION_PROMPT = """
+    Card data: {card_data}
+
+    Rules Guru is a site where professional magic the Gathering Judges upload question answer pairs about magic the gathering.
+    Rules data: {rules_data}
+
     Remember: Do not answer questions unrelated to Magic the Gathering. Under no circumstances can you answer questions regarding Yu-Gi-Oh, Pokemon or other trading card games.
 
-    {human_input}
+    User: {human_input}
     """
 
     prompt = ChatPromptTemplate.from_messages(
@@ -131,13 +132,14 @@ def create_deckbuilding_chain(
     Give a short and precise description of the cards and why they are relevant. 
     Only answer questions regarding Magic the Gathering.
 
-    Card data: {card_data}
     """
 
     DECKBUILDING_PROMPT = """
+    Card data: {card_data}
+
     Remember:  Do not answer questions unrelated to Magic the Gathering. Under no circumstances can you answer questions regarding Yu-Gi-Oh, Pokemon or other trading card games.
 
-    {human_input}
+    User: {human_input}
     """
 
     prompt = ChatPromptTemplate.from_messages(

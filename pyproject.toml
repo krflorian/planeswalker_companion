@@ -10,16 +10,10 @@ packages = [{ include = "mtg" }]
 [tool.poetry.dependencies]
 python = "^3.11"
 pandas = "^2.0.3"
-ipykernel = "^6.25.1"
-pdfminer-six = "^20221105"
-thefuzz = "^0.20.0"
 gradio = "==4.14.0"
 spacy = "^3.6.1"
 spaczz = "^0.6.0"
-black = "^23.7.0"
-tqdm = "^4.66.1"
 spacy-lookups-data = "^1.0.5"
-hnswlib = "^0.7.0"
 tiktoken = "^0.5.1"
 pydantic = "^2.5.3"
 langchain = "^0.1.1"
@@ -27,6 +21,10 @@ langchain-openai = "^0.0.2.post1"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.2"
+black = "^23.7.0"
+ragas = "^0.1.1"
+ipykernel = "^6.25.1"
+tqdm = "^4.66.1"
 
 [build-system]
 requires = ["poetry-core"]
