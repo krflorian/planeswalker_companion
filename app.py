@@ -113,4 +113,5 @@ with gradio.Blocks() as ui:
     # clear button
     clear_btn.click(clear_memory, inputs=[magic_bot])
 
-ui.launch()
+#ui.launch(debug=True)
+ui.launch(favicon_path='./assets/favicon1.jpg')
