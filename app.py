@@ -78,7 +78,7 @@ def up_vote(magic_bot: MagicGPT, like_state: gradio.LikeData):
 
 
 # creates a new Blocks app and assigns it to the variable demo.
-with gradio.Blocks() as ui:
+with gradio.Blocks(title='Nissa') as ui:
     gradio.Markdown(HEADER_TEXT)
     # chat
     chat = gradio.Chatbot(likeable=True)
