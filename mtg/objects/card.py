@@ -22,6 +22,9 @@ class Card(BaseModel):
     def __repr__(self) -> str:
         return f"Card({self.name})"
 
+    def to_dict(self) -> dict:
+        return self.model_dump()
+
     def to_text(self, include_price: bool = True):
         """parse card data to text format"""
         text = []

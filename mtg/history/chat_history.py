@@ -1,8 +1,12 @@
+import random
+import json
+from uuid import uuid4
+from pathlib import Path
+
 from mtg.objects import Message, MessageType, Document
 from mtg.utils.logging import get_logger
 from .spacy_utils import match_cards
 from .data_service import DataService
-import random
 
 logger = get_logger(__name__)
 
@@ -11,6 +15,7 @@ class ChatHistory:
     def __init__(self, data_service_host: str = "127.0.0.1"):
         self.chat: list[Message] = []
         self.data_service = DataService(host=data_service_host)
+        self.intent = MessageType.CONVERSATION
 
     @property
     def conversation_topic(self):
@@ -22,9 +27,8 @@ class ChatHistory:
     def add_message(self, message: Message):
         self.chat.append(message)
 
-    def add_user_message(self, query: str) -> None:
-        intent = self.classify_intent(query)
-        message = self.create_message(query, message_type=intent)
+    def add_user_message(self, query: str, message_type: MessageType) -> None:
+        message = self.create_message(query, message_type=message_type)
         self.add_message(message)
 
     def add_assistant_message(self, text: str) -> None:
@@ -33,6 +37,16 @@ class ChatHistory:
 
     def clear(self):
         self.chat = []
+
+    def dump(self, filepath: Path):
+        filename = filepath / f"{str(uuid4())}.json"
+        logger.info(f"saving chat in {filename}")
+        with filename.open("w", encoding="utf-8") as outfile:
+            json.dump(
+                [message.to_dict() for message in self.chat],
+                outfile,
+                ensure_ascii=False,
+            )
 
     def get_card_data(
         self,
@@ -57,23 +71,36 @@ class ChatHistory:
         return card_data
 
     def get_rules_data(self, number_of_messages=4) -> list[str]:
-        rule_texts, rule_ids = [], set()
+        rules, rule_ids = [], set()
         for message in self.chat[-number_of_messages:]:
             if message.type != MessageType.RULES:
                 continue
             for rule in message.rules:
                 if rule.name not in rule_ids:
                     rule_ids.add(rule.name)
-                    rule_texts.append(rule.text)
+                    rules.append(rule)
             for card in message.cards:
                 if card.rulings and card.name not in rule_ids:
                     rule_ids.add(card.name)
-                    rule_texts.append(f"Rulings for card {card.name}:")
                     for rule in card.rulings:
-                        rule_texts.extend([rule.text for rule in card.rulings])
+                        rules.extend([rule for rule in card.rulings])
 
+        # separate origins
+        origin_2_rule = {}
+        for rule in rules:
+            origin = rule.metadata.get("origin", "other rules:")
+            if origin not in origin_2_rule:
+                origin_2_rule[origin] = []
+            origin_2_rule[origin].append(rule.text)
+
+        # merge texts
+        rule_texts = ""
+        for origin, texts in origin_2_rule.items():
+            rule_texts += origin + ":\n"
+            for text in texts:
+                rule_texts += f"{text}\n"
         if rule_texts:
-            return "\n".join(rule_texts)
+            return rule_texts
         else:
             return "No Rules found"
 
@@ -136,11 +163,7 @@ class ChatHistory:
         logger.info(f"creating {message_type} message")
 
         # add card data
-        if message_type == MessageType.ASSISTANT:
-            k = 15
-        else:
-            k = 5
-        all_cards = self.data_service.get_cards(text, k=k)
+        all_cards = self.data_service.get_cards(text, k=10)
 
         processed_text, matched_cards = self.replace_card_names_with_urls(
             text=text, cards=all_cards, message_type=message_type
@@ -169,7 +192,7 @@ class ChatHistory:
         )
 
         # add additional cards
-        if message_type == "deckbuilding":
+        if message_type == MessageType.DECKBUILDING:
             message = self.add_additional_cards(message=message, max_number_of_cards=10)
 
         logger.info(
@@ -188,6 +211,7 @@ class ChatHistory:
         threshold: float = 0.5,
         lasso_threshold: float = 0.03,
     ) -> Message:
+
         additional_cards = []
         for card in message.cards:
             # for each card in message get max_number_of_cards
@@ -201,6 +225,17 @@ class ChatHistory:
                 )
             )
 
+        # from message
+        additional_cards.extend(
+            self.data_service.get_cards(
+                message.text,
+                k=max(10, max_number_of_cards),
+                threshold=threshold,
+                lasso_threshold=lasso_threshold,
+                sample_results=True,
+            )
+        )
+
         # choose cards
         cards = []
         for card in additional_cards:
@@ -208,6 +243,7 @@ class ChatHistory:
                 cards.append(card)
         cards = random.choices(cards, k=min(len(cards), max_number_of_cards))
 
+        # add additional cards
         message.cards.extend(cards)
         logger.debug(f"added {len(cards)} additional cards")
 
@@ -232,6 +268,8 @@ class ChatHistory:
                     rule_ids.add(card.name)
                     documents.extend(card.rulings)
                     for idx, text in enumerate(card.oracle.split("\n")):
+                        if text == "":
+                            continue
                         documents.append(
                             Document(
                                 text=text,
@@ -254,23 +292,3 @@ class ChatHistory:
                 processed_text=validation_text,
             )
         )
-
-    def classify_intent(self, query) -> MessageType:
-        """possible values: deckbuilding, rules, conversation, malevolent"""
-
-        def most_frequent(List):
-            return max(set(List), key=List.count)
-
-        history = [
-            message.type
-            for message in self.chat[-5:]
-            if message.type != MessageType.ASSISTANT
-        ]
-
-        intent = self.data_service.classify_intent(query)
-        intent = MessageType(intent)
-
-        history.append(intent)
-        history.append(intent)
-
-        return most_frequent(history)
