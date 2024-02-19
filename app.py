@@ -127,4 +127,5 @@ with gradio.Blocks() as ui:
     # upvote button
     chat.like(up_vote, [magic_bot], outputs=[txt])
 
-ui.launch()
+ui.launch(favicon_path='./assets/favicon1.jpg')
+
