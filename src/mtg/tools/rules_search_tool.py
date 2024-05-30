@@ -34,7 +34,7 @@ class RulesSearchTool(BaseTool):
     k: int = 10
     threshold: float = 0.3
     lasso_threshold: float = 0.1
-    sample_results: bool = False
+    history: list[Document] = Field(default_factory=list)
     description = """
     Lookup Magic the Gathering rules and information about various keywords from trustworthy sources:
         - Comprehensive Rulebook
@@ -46,7 +46,6 @@ class RulesSearchTool(BaseTool):
     def _run(
         self,
         query: str,
-        include_price: bool = False,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool."""
@@ -66,7 +65,6 @@ class RulesSearchTool(BaseTool):
     async def _arun(
         self,
         query: str,
-        include_price: bool = False,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool asynchronously."""
@@ -76,22 +74,20 @@ class RulesSearchTool(BaseTool):
             "k": self.k,
             "threshold": self.threshold,
             "lasso_threshold": self.lasso_threshold,
-            "sample_results": self.sample_results,
         }
         response = await send_post_request(f"{self.url}rules/", data=payload)
         return self._parse_response(response)
 
     def _parse_response(self, response: dict) -> list[Document]:
-
+        """parses response to string and saves documents in history"""
         documents = []
         for resp in response:
             document = resp["document"]
-            distance = resp["distance"]
             document = Document(**document)
-            print(f"received rule {document.name} distance {distance:.2f}")
             documents.append(document)
 
-        print(f"found {len(documents)} relevant documents")
+        logger.info(f"received {len(documents)} cards from card search tool")
+        self.history.append(documents)
 
         origin_2_doc = {}
         for doc in documents:
@@ -110,16 +106,3 @@ class RulesSearchTool(BaseTool):
             return rule_texts
         else:
             return "No Rules found"
-
-
-if __name__ == "__main__":
-    rule_search = RulesSearchTool(url="http://localhost:8000/")
-
-    print(rule_search.name)
-    print(rule_search.description)
-    print(rule_search.args)
-    print(rule_search.return_direct)
-    print("searching cards.....")
-    print("synchron")
-    result = rule_search.run("deathtouch")
-    print(result)

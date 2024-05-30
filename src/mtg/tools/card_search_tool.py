@@ -1,5 +1,3 @@
-# %%
-
 import aiohttp
 import requests
 from langchain.tools import BaseTool
@@ -27,10 +25,6 @@ async def send_post_request(url, data):
 
 class CardSearchInput(BaseModel):
     query: str = Field(description="should be a search query")
-    include_price: bool = Field(
-        default=False,
-        description="If the current price of the card should be included in the output",
-    )
 
 
 class CardSearchTool(BaseTool):
@@ -42,11 +36,11 @@ class CardSearchTool(BaseTool):
     threshold: float = 0.4
     lasso_threshold: float = 0.1
     sample_results: bool = False
+    history: list[Card] = Field(default_factory=list)
 
     def _run(
         self,
         query: str,
-        include_price: bool = False,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool."""
@@ -62,16 +56,12 @@ class CardSearchTool(BaseTool):
             },
         )
         response = response.json()
-        cards = self._parse_response(response)
-
-        return "\n\n".join(
-            [card.to_text(include_price=include_price) for card in cards]
-        )
+        cards_text = self._parse_response(response)
+        return cards_text
 
     async def _arun(
         self,
         query: str,
-        include_price: bool = False,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool asynchronously."""
@@ -84,12 +74,12 @@ class CardSearchTool(BaseTool):
             "sample_results": self.sample_results,
         }
         response = await send_post_request(f"{self.url}cards/", data=payload)
-        cards = self._parse_response(response)
-        return "\n\n".join(
-            [card.to_text(include_price=include_price) for card in cards]
-        )
+        cards_text = self._parse_response(response)
+        return cards_text
 
     def _parse_response(self, response: dict) -> list[Card]:
+        """parses response to string and saves Cards in history"""
+
         card_names = set()
         cards = []
         for card in response:
@@ -102,20 +92,10 @@ class CardSearchTool(BaseTool):
             else:
                 cards.append(card)
                 card_names.add(card.name)
-        return cards
 
-
-if __name__ == "__main__":
-
-    card_search = CardSearchTool(url="http://localhost:8000/cards/")
-
-    print(card_search.name)
-    print(card_search.description)
-    print(card_search.args)
-    print(card_search.return_direct)
-    print("searching cards.....")
-    print("...")
-    result = await card_search.arun("chatterfang, squirrel general")
-    print(result)
-
-# %%
+        logger.info(f"received {len(cards)} cards from card search tool")
+        self.history.append(cards)
+        cards_text = "\n\n".join([card.to_text() for card in cards])
+        if cards:
+            return cards_text
+        return "No Cards Info found!"

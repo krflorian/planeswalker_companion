@@ -1,11 +1,11 @@
 [tool.poetry]
-name = "mtg"
+name = "planeswalker-companion"
 version = "0.1.0"
 description = ""
 authors = ["florian.krempl <florian.krempl@outlook.com>"]
 license = "mit"
 readme = "README.md"
-packages = [{ include = "mtg" }]
+packages = [{from ="src", include = "mtg" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"

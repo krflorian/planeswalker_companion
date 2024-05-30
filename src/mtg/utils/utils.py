@@ -3,9 +3,9 @@ import yaml
 import logging
 
 
-def get_openai_api_key():
+def get_openai_api_key(config_file: str = "configs/config.yaml"):
     try:
-        with open("configs/config.yaml", "r") as infile:
+        with open(config_file, "r") as infile:
             config = yaml.load(infile, Loader=yaml.FullLoader)
         openai_api_key = config.get("open_ai_token")
         logging.info("loaded open ai token from config file ")
