@@ -49,6 +49,8 @@ class RulesSearchTool(BaseTool):
     ) -> str:
         """Use the tool."""
 
+        logger.info(f"Triggering Rules Search with query: {query}")
+
         response = requests.post(
             url=f"{self.url}rules/",
             json={
@@ -68,6 +70,8 @@ class RulesSearchTool(BaseTool):
     ) -> str:
         """Use the tool asynchronously."""
 
+        logger.info(f"Triggering Rules Search with query: {query}")
+
         payload = {
             "text": query,
             "k": self.k,
@@ -82,8 +86,10 @@ class RulesSearchTool(BaseTool):
         documents = []
         for resp in response:
             document = resp["document"]
+            distance = resp["distance"]
             document = Document(**document)
             documents.append(document)
+            logger.debug(f"received document {document.name} distance {distance:.2f}")
 
         logger.info(f"received {len(documents)} cards from card search tool")
 
@@ -92,6 +98,7 @@ class RulesSearchTool(BaseTool):
             origin = doc.metadata.get("origin", "other rules:")
             if origin not in origin_2_doc:
                 origin_2_doc[origin] = []
+            text = f"{doc.name} - {doc.text}\nsource: {doc.url}"
             origin_2_doc[origin].append(doc.text)
 
         # merge texts

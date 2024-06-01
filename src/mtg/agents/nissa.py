@@ -69,9 +69,11 @@ async def astream_response(
                 status.update(
                     label=f"Looking up Infos with {event['name']}...", state="running"
                 )
-                st.write(
-                    f"using {event['name']} to search for: '{event['data'].get('input')}'"
-                )
+                query = event["data"].get("input").get("query", None)
+                if query is not None:
+                    st.write(f"using {event['name']} to search for: '{query}'")
+                else:
+                    st.write(f"using {event['name']}")
 
             if kind == "on_chat_model_stream":
                 content = event["data"]["chunk"].content

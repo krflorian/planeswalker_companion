@@ -1,7 +1,8 @@
 from pathlib import Path
 import streamlit as st
 
-from mtg.agents import create_llm, create_memory, create_chat_agent
+from mtg.agents import create_llm, create_memory, create_chat_agent, create_judge_agent
+
 from mtg.agents import nissa, judge, user
 from mtg.tools import CardSearchTool, RulesSearchTool, UserDeckLookupTool, CallJudgeTool
 from mtg.utils.logging import get_logger
@@ -49,20 +50,33 @@ if "agent" not in st.session_state:
     # setup tools and llm
     llm = create_llm(MODEL_VERSION)
     memory = create_memory(llm=llm)
-    judge_tool = CallJudgeTool()
+
+    # tools
     card_search_tool = CardSearchTool()
     rules_search_tool = RulesSearchTool()
     deck_lookup_tool = UserDeckLookupTool()
+    st.session_state.judge_tool = CallJudgeTool()
 
-    st.session_state.call_judge = judge_tool
+    # agents
     st.session_state.agent = create_chat_agent(
-        tools=[judge_tool, card_search_tool, rules_search_tool, deck_lookup_tool],
-        memory=memory,
-        model_name="gpt-4o",
         system_message=nissa.SYSTEM_MESSAGE,
         prompt=nissa.PROMPT,
+        tools=[
+            st.session_state.judge_tool,
+            card_search_tool,
+            rules_search_tool,
+            deck_lookup_tool,
+        ],
+        memory=memory,
+        model_name="gpt-4o",
     )
-    # st.session_state.judge = create
+    st.session_state.judge = create_judge_agent(
+        system_message=judge.SYSTEM_MESSAGE,
+        tools=[card_search_tool, rules_search_tool],
+        memory=memory,
+        model_name="gpt-4o",
+    )
+
 
 if "uploaded_files" not in st.session_state:
     decks_path = Path("data/decks")
@@ -90,24 +104,16 @@ with st.sidebar:
             sidebar_text += f"**- {file.stem}**  \n"
     st.markdown(sidebar_text)
 
-    # HANDLE BUTTONS and JUDGE
-    # check if judge is called
+    # HANDLE BUTTONS
     col1, col2 = st.columns(2)
 
-    if (
-        col1.button("Call Judge", type="primary", use_container_width=True)
-        or st.session_state.call_judge.is_called
-    ):
-        st.session_state.messages.append(
-            {
-                "role": "judge",
-                "content": "i am the judge and i will check all rules questions",
-                "image": judge.PROFILE_PICTURE,
-            }
-        )
-        st.session_state.call_judge.is_called = False
+    # call judge
+    if col1.button("Call Judge", type="primary", use_container_width=True):
+        st.session_state.judge_tool.is_called = True
 
+    # reset conversation
     if col2.button("Reset Conversation", use_container_width=True):
+        # TODO reset memory and chat history
         st.write("resetting conversation")
 
 # HANDLE CHAT
@@ -142,3 +148,18 @@ if query := st.chat_input("What is up?"):
     st.session_state.messages.append(
         {"role": "nissa", "content": response, "image": nissa.PROFILE_PICTURE}
     )
+
+if st.session_state.judge_tool.is_called:
+    # TODO does not work when nissa calls the judge
+    # Display assistant response in chat message container
+    with st.chat_message("judge", avatar=judge.PROFILE_PICTURE):
+        stream = judge.astream_response(
+            agent_executor=st.session_state.judge,
+            container=st.status,
+        )
+        generator = to_sync_generator(stream)
+        response = st.write_stream(generator)
+    st.session_state.messages.append(
+        {"role": "judge", "content": response, "image": judge.PROFILE_PICTURE}
+    )
+    st.session_state.judge_tool.is_called = False

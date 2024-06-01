@@ -25,33 +25,50 @@ async def send_post_request(url, data):
 
 class CardSearchInput(BaseModel):
     query: str = Field(description="should be a search query")
+    number_of_cards: int = Field(
+        default=1, description="number of cards that should be returned"
+    )
+    sample_results: Optional[bool] = Field(
+        default=False,
+        description="For more creative responses sample the results from a pool of found cards",
+    )
 
 
 class CardSearchTool(BaseTool):
     name = "mtg_card_search"
-    description = "Search for cards in a magic the gathering card database with all cards up to 14.05.2024. You will receive all card info including card specific rulings, attributes and price"
+    description = (
+        "Search for cards in a magic the gathering card database with all cards up to 14.05.2024."
+        "You will receive all card info including card specific rulings, attributes and price"
+        "You can also choose number of cards you want to receive. For arbitrary queries that are not specific cards, ask for multiple results."
+        "An arbitrary query could be 'black removal spells' number_of_cards = 5 sample_results = True"
+        "A card name query could be 'Black Lotus' number_of_cards = 1 sample_results = False"
+    )
     args_schema: Type[BaseModel] = CardSearchInput
     url: str = "http://localhost:8000/"
-    k: int = 10
     threshold: float = 0.4
     lasso_threshold: float = 0.1
-    sample_results: bool = False
 
     def _run(
         self,
         query: str,
+        number_of_cards: int,
+        sample_results: bool = False,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool."""
+
+        logger.info(
+            f"Triggering Card Search with query: {query}, number_of_cards: {number_of_cards}, sample_results: {sample_results}"
+        )
 
         response = requests.post(
             url=f"{self.url}cards/",
             json={
                 "text": query,
-                "k": self.k,
+                "k": number_of_cards,
                 "threshold": self.threshold,
                 "lasso_threshold": self.lasso_threshold,
-                "sample_results": self.sample_results,
+                "sample_results": sample_results,
             },
         )
         response = response.json()
@@ -61,16 +78,22 @@ class CardSearchTool(BaseTool):
     async def _arun(
         self,
         query: str,
+        number_of_cards: int,
+        sample_results: bool = False,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool asynchronously."""
 
+        logger.info(
+            f"Triggering Card Search with query: {query}, number_of_cards: {number_of_cards}, sample_results: {sample_results}"
+        )
+
         payload = {
             "text": query,
-            "k": self.k,
+            "k": number_of_cards,
             "threshold": self.threshold,
             "lasso_threshold": self.lasso_threshold,
-            "sample_results": self.sample_results,
+            "sample_results": sample_results,
         }
         response = await send_post_request(f"{self.url}cards/", data=payload)
         cards_text = self._parse_response(response)

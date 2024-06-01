@@ -46,5 +46,5 @@ class Card(BaseModel):
         if include_price:
             if self.price != 0.0:
                 text.append(f"price in EUR: {self.price}")
-
+        text.append(f"card url: {self.url}")
         return "\n".join(text)

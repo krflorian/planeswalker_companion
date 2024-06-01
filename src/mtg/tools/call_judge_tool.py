@@ -32,7 +32,7 @@ class CallJudgeTool(BaseTool):
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool."""
-
+        logger.info("Triggering Judge Tool")
         self.question = question
         return (
             "A Magic the Gathering Judge will double check your response to the user."
