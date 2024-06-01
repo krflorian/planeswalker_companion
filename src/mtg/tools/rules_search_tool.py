@@ -34,7 +34,6 @@ class RulesSearchTool(BaseTool):
     k: int = 10
     threshold: float = 0.3
     lasso_threshold: float = 0.1
-    history: list[Document] = Field(default_factory=list)
     description = """
     Lookup Magic the Gathering rules and information about various keywords from trustworthy sources:
         - Comprehensive Rulebook
@@ -87,7 +86,6 @@ class RulesSearchTool(BaseTool):
             documents.append(document)
 
         logger.info(f"received {len(documents)} cards from card search tool")
-        self.history.append(documents)
 
         origin_2_doc = {}
         for doc in documents:

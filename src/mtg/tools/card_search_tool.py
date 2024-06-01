@@ -36,7 +36,6 @@ class CardSearchTool(BaseTool):
     threshold: float = 0.4
     lasso_threshold: float = 0.1
     sample_results: bool = False
-    history: list[Card] = Field(default_factory=list)
 
     def _run(
         self,
@@ -94,7 +93,6 @@ class CardSearchTool(BaseTool):
                 card_names.add(card.name)
 
         logger.info(f"received {len(cards)} cards from card search tool")
-        self.history.append(cards)
         cards_text = "\n\n".join([card.to_text() for card in cards])
         if cards:
             return cards_text

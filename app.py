@@ -1,130 +1,144 @@
-import gradio
-import yaml
 from pathlib import Path
+import streamlit as st
 
-from mtg.bot import MagicGPT
-from mtg.history.chat_history import ChatHistory
+from mtg.agents import create_llm, create_memory, create_chat_agent
+from mtg.agents import nissa, judge, user
+from mtg.tools import CardSearchTool, RulesSearchTool, UserDeckLookupTool, CallJudgeTool
 from mtg.utils.logging import get_logger
+from mtg.utils.ui import to_sync_generator
+
 
 logger = get_logger(__name__)
 
-with open("configs/config.yaml", "r") as infile:
-    config = yaml.load(infile, Loader=yaml.FullLoader)
 
+# TODO upvote, downvote
 
-VERSION = "0.0.4"
-
-DECKBUILDING_MODEL_NAME = config.get("llm_model_name_deckbuilding", "gpt-3.5-turbo")
-RUKES_MODEL_NAME = config.get("llm_model_name_rules", "gpt-4-0125-preview")
-
-HEADER_TEXT = """
-# Hi, I'm Nissa! 
-I can help you with all kinds of questions regarding Magic: the Gathering rules or help you with brewing a new deck.  
-I will never save any user data. To help enhance my training and development, feel free to use the like/dislike button to save messages.  
-[Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)  
-"""
+VERSION = "1.0.0"
+MODEL_VERSION = "gpt-4o"
 
 FOOTER_TEXT = f"""
 Support Nissa on [Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)  
 version: {VERSION}  
-deckbuilding model: {DECKBUILDING_MODEL_NAME}  
-rules model: {RUKES_MODEL_NAME}  
+chat model: {MODEL_VERSION}
 """
 
+st.set_page_config(
+    page_title="Nissa",
+    page_icon=nissa.PROFILE_PICTURE,
+    layout="wide",
+)
 
-def get_magic_bot() -> MagicGPT:
-    """Initialize Magicbot with Memory for user session."""
-    logger.info("Creating new user session.")
-    magic_bot = MagicGPT(
-        chat_history=ChatHistory(
-            data_service_host=config.get("data_service_host", "127.0.0.1")
-        ),
-        model_deckbuilding=DECKBUILDING_MODEL_NAME,
-        model_rules=RUKES_MODEL_NAME,
-        temperature_deck_building=0.7,
-        max_token_limit=1000,
-        data_filepath=Path(config.get("message_filepath", "data/raw/messages")),
+# HANDLE STATE
+# Initialize chat history
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {
+            "role": "nissa",
+            "content": nissa.WELCOME_TEXT,
+            "image": nissa.PROFILE_PICTURE,
+        },
+        {
+            "role": "judge",
+            "content": judge.WELCOME_TEXT,
+            "image": judge.PROFILE_PICTURE,
+        },
+    ]
+
+if "agent" not in st.session_state:
+
+    # setup tools and llm
+    llm = create_llm(MODEL_VERSION)
+    memory = create_memory(llm=llm)
+    judge_tool = CallJudgeTool()
+    card_search_tool = CardSearchTool()
+    rules_search_tool = RulesSearchTool()
+    deck_lookup_tool = UserDeckLookupTool()
+
+    st.session_state.call_judge = judge_tool
+    st.session_state.agent = create_chat_agent(
+        tools=[judge_tool, card_search_tool, rules_search_tool, deck_lookup_tool],
+        memory=memory,
+        model_name="gpt-4o",
+        system_message=nissa.SYSTEM_MESSAGE,
+        prompt=nissa.PROMPT,
     )
-    return magic_bot
+    # st.session_state.judge = create
 
+if "uploaded_files" not in st.session_state:
+    decks_path = Path("data/decks")
+    st.session_state.uploaded_files = set()
+    for file in decks_path.iterdir():
+        if file.suffix == ".txt":
+            st.session_state.uploaded_files.add(file.stem)
 
-def update_user_message(user_message: str, magic_bot: MagicGPT):
-    """Process the User question - Classifies intent and adds information."""
-    chat = magic_bot.process_user_query(user_message)
-    return chat, magic_bot
+# HANDLE SIDEBAR
+# upload deck feature
+with st.sidebar:
 
+    data_path = Path("data/decks")
+    uploaded_file = st.file_uploader("## Upload your deck here:", type="txt")
+    if (uploaded_file is not None) and (
+        uploaded_file.name not in st.session_state.uploaded_files
+    ):
+        with (data_path / uploaded_file.name).open("wb") as outfile:
+            outfile.write(uploaded_file.getbuffer())
+        st.session_state.uploaded_files.add(uploaded_file.stem)
 
-def update_textbox(textboxtext: str, user_message: str):
-    """Clear the user message from Textbox."""
-    user_message = textboxtext
-    return "", user_message
+    sidebar_text = "Available Decks: \n\n"
+    for file in data_path.iterdir():
+        if file.suffix == ".txt":
+            sidebar_text += f"**- {file.stem}**  \n"
+    st.markdown(sidebar_text)
 
+    # HANDLE BUTTONS and JUDGE
+    # check if judge is called
+    col1, col2 = st.columns(2)
 
-def process_user_message(magic_bot: MagicGPT):
-    """Streams the response of the Chatbot."""
-    responses = magic_bot.ask()
-    for chat in responses:
-        yield chat
-
-
-def clear_memory(magic_bot: MagicGPT):
-    """Delete conversation history."""
-    magic_bot.clear_memory()
-
-
-def up_vote(magic_bot: MagicGPT, like_state: gradio.LikeData):
-    magic_bot.save_chat(liked=like_state.liked, message_index=like_state.index)
-    return
-
-
-# creates a new Blocks app and assigns it to the variable demo.
-with gradio.Blocks(title="Nissa") as ui:
-    gradio.Markdown(HEADER_TEXT)
-    # chat
-    chat = gradio.Chatbot(likeable=True)
-
-    magic_bot = gradio.State(get_magic_bot)
-    user_message = gradio.State("")
-
-    # textbox
-    with gradio.Row():
-        txt = gradio.Textbox(
-            show_label=False, placeholder="Enter text and press enter", scale=7
+    if (
+        col1.button("Call Judge", type="primary", use_container_width=True)
+        or st.session_state.call_judge.is_called
+    ):
+        st.session_state.messages.append(
+            {
+                "role": "judge",
+                "content": "i am the judge and i will check all rules questions",
+                "image": judge.PROFILE_PICTURE,
+            }
         )
-        submit_btn = gradio.Button(value="Submit", variant="primary", scale=1)
+        st.session_state.call_judge.is_called = False
 
-    # clear button
-    clear_btn = gradio.ClearButton([chat, txt], value="Start new Conversation")
+    if col2.button("Reset Conversation", use_container_width=True):
+        st.write("resetting conversation")
 
-    gradio.Markdown(FOOTER_TEXT)
-    # submit text
-    txt.submit(
-        update_textbox, inputs=[txt, user_message], outputs=[txt, user_message]
-    ).then(
-        update_user_message,
-        inputs=[user_message, magic_bot],
-        outputs=[chat, magic_bot],
-        queue=False,
-    ).then(
-        process_user_message, inputs=[magic_bot], outputs=[chat]
+# HANDLE CHAT
+# Display chat messages from history on app rerun
+for message in st.session_state.messages:
+    with st.chat_message(message["role"], avatar=message["image"]):
+        st.markdown(message["content"])
+
+# Triggers when user adds input
+if query := st.chat_input("What is up?"):
+    # Add user message to chat history
+    # TODO parse message
+    st.session_state.messages.append(
+        {"role": "user", "content": query, "image": user.PROFILE_PICTURE}
     )
+    # Display user message in chat message container
+    with st.chat_message("user", avatar=user.PROFILE_PICTURE):
+        st.markdown(query)
 
-    # submit button
-    submit_btn.click(
-        update_textbox, inputs=[txt, user_message], outputs=[txt, user_message]
-    ).then(
-        update_user_message,
-        inputs=[user_message, magic_bot],
-        outputs=[chat, magic_bot],
-        queue=False,
-    ).then(
-        process_user_message, inputs=[magic_bot], outputs=[chat]
+    # Display assistant response in chat message container
+    with st.chat_message("nissa", avatar=nissa.PROFILE_PICTURE):
+        stream = nissa.astream_response(
+            agent_executor=st.session_state.agent,
+            query=query,
+            decks=list(st.session_state.uploaded_files),
+            container=st.status,
+        )
+        generator = to_sync_generator(stream)
+        response = st.write_stream(generator)
+
+    # TODO parse message
+    st.session_state.messages.append(
+        {"role": "nissa", "content": response, "image": nissa.PROFILE_PICTURE}
     )
-
-    # clear button
-    clear_btn.click(clear_memory, inputs=[magic_bot])
-
-    # upvote button
-    chat.like(up_vote, [magic_bot], outputs=[txt])
-
-ui.launch(favicon_path="./assets/favicon1.jpg")
