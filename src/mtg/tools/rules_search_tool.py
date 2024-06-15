@@ -91,7 +91,7 @@ class RulesSearchTool(BaseTool):
             documents.append(document)
             logger.debug(f"received document {document.name} distance {distance:.2f}")
 
-        logger.info(f"received {len(documents)} cards from card search tool")
+        logger.info(f"received {len(documents)} documents from rules search tool")
 
         origin_2_doc = {}
         for doc in documents:
@@ -99,14 +99,14 @@ class RulesSearchTool(BaseTool):
             if origin not in origin_2_doc:
                 origin_2_doc[origin] = []
             text = f"{doc.name} - {doc.text}\nsource: {doc.url}"
-            origin_2_doc[origin].append(doc.text)
+            origin_2_doc[origin].append(text)
 
         # merge texts
         rule_texts = ""
         for origin, texts in origin_2_doc.items():
             rule_texts += origin + ":\n"
             for text in texts:
-                rule_texts += f"{text}\n"
+                rule_texts += f"{text}\n\n"
         if rule_texts:
             return rule_texts
         else:

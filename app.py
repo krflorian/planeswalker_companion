@@ -4,7 +4,13 @@ import streamlit as st
 from mtg.agents import create_llm, create_memory, create_chat_agent, create_judge_agent
 
 from mtg.agents import nissa, judge, user
-from mtg.tools import CardSearchTool, RulesSearchTool, UserDeckLookupTool, CallJudgeTool
+from mtg.tools import (
+    CardSearchTool,
+    RulesSearchTool,
+    UserDeckLookupTool,
+    CallJudgeTool,
+    JudgeReportTool,
+)
 from mtg.utils.logging import get_logger
 from mtg.utils.ui import to_sync_generator
 
@@ -55,6 +61,7 @@ if "agent" not in st.session_state:
     card_search_tool = CardSearchTool()
     rules_search_tool = RulesSearchTool()
     deck_lookup_tool = UserDeckLookupTool()
+    judge_report_tool = JudgeReportTool()
     st.session_state.judge_tool = CallJudgeTool()
 
     # agents
@@ -72,36 +79,28 @@ if "agent" not in st.session_state:
     )
     st.session_state.judge = create_judge_agent(
         system_message=judge.SYSTEM_MESSAGE,
-        tools=[card_search_tool, rules_search_tool],
+        tools=[card_search_tool, rules_search_tool, judge_report_tool],
         memory=memory,
         model_name="gpt-4o",
     )
 
 
 if "uploaded_files" not in st.session_state:
-    decks_path = Path("data/decks")
-    st.session_state.uploaded_files = set()
-    for file in decks_path.iterdir():
-        if file.suffix == ".txt":
-            st.session_state.uploaded_files.add(file.stem)
+    st.session_state.uploaded_files = {}
 
 # HANDLE SIDEBAR
 # upload deck feature
 with st.sidebar:
 
-    data_path = Path("data/decks")
     uploaded_file = st.file_uploader("## Upload your deck here:", type="txt")
     if (uploaded_file is not None) and (
         uploaded_file.name not in st.session_state.uploaded_files
     ):
-        with (data_path / uploaded_file.name).open("wb") as outfile:
-            outfile.write(uploaded_file.getbuffer())
-        st.session_state.uploaded_files.add(uploaded_file.stem)
+        st.session_state.uploaded_files[uploaded_file.name] = uploaded_file.getbuffer()
 
     sidebar_text = "Available Decks: \n\n"
-    for file in data_path.iterdir():
-        if file.suffix == ".txt":
-            sidebar_text += f"**- {file.stem}**  \n"
+    for deck_name in st.session_state.uploaded_files.keys():
+        sidebar_text += f"**- {deck_name}**  \n"
     st.markdown(sidebar_text)
 
     # HANDLE BUTTONS
