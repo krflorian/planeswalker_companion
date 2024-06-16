@@ -8,8 +8,12 @@
             "name": "bot",
             "type": "python",
             "request": "launch",
-            "program": "app.py",
+            "module": "streamlit",
             "console": "integratedTerminal",
+            "args": [
+                "run",
+                "app.py"
+            ]
             "justMyCode": true
         }
     ]
