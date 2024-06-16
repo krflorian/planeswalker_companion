@@ -22,6 +22,7 @@ class UserDeckLookupTool(BaseTool):
     name = "user_deck_lookup"
     description = "Look at decks that the user uploaded"
     args_schema: Type[BaseModel] = DeckSearchInput
+    decks: dict[str, str] = {}
 
     def _run(
         self,
@@ -30,20 +31,12 @@ class UserDeckLookupTool(BaseTool):
     ) -> str:
         """Use the tool."""
 
-        filepath = Path(f"data/decks/{deck_name}.txt")
-        if not filepath.is_file():
+        deck = self.decks.get(deck_name, None)
+        if deck is None:
+            deck_list = "\n".join(self.decks.keys())
             logger.error(f"did not find deck '{deck_name}'")
-            user_decks = "\n".join(
-                [
-                    file.stem
-                    for file in Path(f"data/decks/").iterdir()
-                    if file.suffix == ".txt"
-                ]
-            )
-            return f"did not find deck '{deck_name}' - available decks:\n {user_decks}"
-
-        with filepath.open("r", encoding="utf-8") as infile:
-            deck = infile.read()
+            return f"did not find deck '{deck_name}' - available decks:\n {deck_list}"
+        logger.info(f"looked up '{deck_name}' deck")
         return deck
 
     async def _arun(

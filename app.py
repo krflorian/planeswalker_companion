@@ -1,4 +1,3 @@
-from pathlib import Path
 import streamlit as st
 
 from mtg.agents import create_llm, create_memory, create_chat_agent, create_judge_agent
@@ -60,9 +59,9 @@ if "agent" not in st.session_state:
     # tools
     card_search_tool = CardSearchTool()
     rules_search_tool = RulesSearchTool()
-    deck_lookup_tool = UserDeckLookupTool()
     judge_report_tool = JudgeReportTool()
     st.session_state.judge_tool = CallJudgeTool()
+    st.session_state.deck_tool = UserDeckLookupTool()
 
     # agents
     st.session_state.agent = create_chat_agent(
@@ -70,9 +69,9 @@ if "agent" not in st.session_state:
         prompt=nissa.PROMPT,
         tools=[
             st.session_state.judge_tool,
+            st.session_state.deck_tool,
             card_search_tool,
             rules_search_tool,
-            deck_lookup_tool,
         ],
         memory=memory,
         model_name="gpt-4o",
@@ -84,22 +83,21 @@ if "agent" not in st.session_state:
         model_name="gpt-4o",
     )
 
-
-if "uploaded_files" not in st.session_state:
-    st.session_state.uploaded_files = {}
-
 # HANDLE SIDEBAR
 # upload deck feature
 with st.sidebar:
 
-    uploaded_file = st.file_uploader("## Upload your deck here:", type="txt")
-    if (uploaded_file is not None) and (
-        uploaded_file.name not in st.session_state.uploaded_files
-    ):
-        st.session_state.uploaded_files[uploaded_file.name] = uploaded_file.getbuffer()
+    with st.popover("Upload Deck"):
+        deck_name = st.text_input("Deck Name")
+        st.write("Cards:")
+        deck = st.text_area("Format: 1x Card Name", height=275)
+
+        if st.button("Upload Deck", type="primary", use_container_width=True):
+            st.session_state.deck_tool.decks[deck_name] = deck
+            st.write(f"Successfully uploaded deck: '{deck_name}'")
 
     sidebar_text = "Available Decks: \n\n"
-    for deck_name in st.session_state.uploaded_files.keys():
+    for deck_name in st.session_state.deck_tool.decks.keys():
         sidebar_text += f"**- {deck_name}**  \n"
     st.markdown(sidebar_text)
 
@@ -137,7 +135,7 @@ if query := st.chat_input("What is up?"):
         stream = nissa.astream_response(
             agent_executor=st.session_state.agent,
             query=query,
-            decks=list(st.session_state.uploaded_files),
+            decks=list(st.session_state.deck_tool.decks),
             container=st.status,
         )
         generator = to_sync_generator(stream)
