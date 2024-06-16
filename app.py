@@ -1,4 +1,5 @@
 import streamlit as st
+from dotenv import load_dotenv
 
 from mtg.agents import create_llm, create_memory, create_chat_agent, create_judge_agent
 
@@ -13,7 +14,7 @@ from mtg.tools import (
 from mtg.utils.logging import get_logger
 from mtg.utils.ui import to_sync_generator
 
-
+load_dotenv("configs/")
 logger = get_logger(__name__)
 
 
