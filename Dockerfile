@@ -23,5 +23,5 @@ RUN chmod -R 555 /app
 RUN adduser --system --no-create-home app
 USER app
 
-# start Gradio
-CMD ["python", "/app/app.py"]
+# start streamlit
+CMD ["streamlit", "run", "/app/app.py"]

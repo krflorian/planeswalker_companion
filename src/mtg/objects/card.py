@@ -25,6 +25,9 @@ class Card(BaseModel):
     def to_dict(self) -> dict:
         return self.model_dump()
 
+    def __hash__(self):
+        return hash(self.name)
+
     def to_text(self, include_price: bool = True):
         """parse card data to text format"""
         text = []
@@ -43,5 +46,5 @@ class Card(BaseModel):
         if include_price:
             if self.price != 0.0:
                 text.append(f"price in EUR: {self.price}")
-
+        text.append(f"card url: {self.url}")
         return "\n".join(text)
