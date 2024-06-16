@@ -14,9 +14,13 @@ from mtg.tools import (
 from mtg.utils.logging import get_logger
 from mtg.utils.ui import to_sync_generator
 
-load_dotenv("configs/")
-logger = get_logger(__name__)
+import os
+import yaml
 
+with open("configs/config.yaml", "r") as infile:
+    config = yaml.safe_load(infile)
+
+os.environ["OPENAI_API_KEY"] = config["open_ai_token"]
 
 # TODO upvote, downvote
 
