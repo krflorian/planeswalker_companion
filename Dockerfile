@@ -14,7 +14,7 @@ COPY ./requirements.txt /app
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 # copy source code to workingdir 
-COPY ./mtg /app/mtg
+COPY ./src /app/src
 COPY ./assets /app/assets
 COPY ./app.py /app/app.py
 
