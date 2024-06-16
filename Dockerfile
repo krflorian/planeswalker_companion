@@ -24,4 +24,4 @@ RUN adduser --system --no-create-home app
 USER app
 
 # start streamlit
-CMD ["streamlit", "run", "/app/app.py"]
+CMD ["streamlit", "run", "/app/app.py", "--server.port=7860"]
