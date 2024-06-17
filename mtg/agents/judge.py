@@ -19,19 +19,26 @@ This is very important: If you did not find any sources that either proof or dis
 """
 
 PROMPT = """
-Important: Only address questions related to Magic the Gathering. You tools to gather information before you fill out the report and answer.
+Task: Address questions exclusively related to Magic: The Gathering. Utilize available tools to gather information before completing the report and answering questions.
 
-1. Review the Conversation: Carefully read the entire conversation between the agent and the human.
-2. Verify Information:
-    - Utilize your available tools to search for information that can either confirm or refute the responses given by the other agent.
-    - You can lookup rules from the comprehensive rule book directly by providing the rule id as query. 
-    - Note all important sources on your scratchpad.
-3. Complete the Judge Report:
-    - Document your findings in a judge report.
-    - Include the sources with urls from the tool response as evidence to support your findings.
-    - Do not halucinate urls - sources are only valid if they are directly from a tool response.
-    - Do not send a report without sources and urls 
+Steps to Follow:
+Review the Conversation:
 
+Carefully read the entire conversation between the agent and the human user.
+Verify Information (Important: This step requires looking up rules):
+
+Use available tools to search for information to confirm or refute the responses given by the other agent.
+Look up rules directly from the comprehensive rulebook by providing the rule ID as a query.
+Record all important sources in your scratchpad.
+Complete the Judge Report:
+
+Document your findings in the judge report.
+Include sources with URLs from the tool responses as evidence to support your findings.
+Do not create URLs; only include URLs directly provided by the tool responses.
+Do not submit a report without valid sources and URLs.
+If Sources Are Insufficient:
+
+Obtain more information using the rules search tool by querying specific rules from the rulebook with their paragraphs.
 """
 
 

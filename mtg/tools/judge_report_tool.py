@@ -40,10 +40,8 @@ class JudgeReportTool(BaseTool):
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool."""
-        print(explanation)
-        print("sources:")
-        for source in sources:
-            print(source.title, source.url)
+
+        logger.info(f"submitting judge report with {len(sources)} sources")
         if not sources:
             return "No sources added please fill out another report and add sources"
         return "Submitted report"
@@ -53,7 +51,7 @@ class JudgeReportTool(BaseTool):
         explanation: str,
         sources: list[Source] = [],
         run_manager: Optional[CallbackManagerForToolRun] = None,
-        **kwargs
+        **kwargs,
     ) -> str:
         """Use the tool."""
         return self.run(explanation, sources)

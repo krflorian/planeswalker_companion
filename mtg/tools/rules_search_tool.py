@@ -24,7 +24,9 @@ async def send_post_request(url, data):
 
 
 class RulesSearchInput(BaseModel):
-    query: str = Field(description="should be a search query")
+    query: str = Field(
+        description="should be a search. can also be a paragraph of a rule from comprehensive rules."
+    )
 
 
 class RulesSearchTool(BaseTool):
