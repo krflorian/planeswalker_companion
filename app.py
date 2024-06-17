@@ -17,20 +17,19 @@ from mtg.utils.ui import to_sync_generator
 import os
 import yaml
 
+logger = get_logger("mtg-bot")
 with open("configs/config.yaml", "r") as infile:
     config = yaml.safe_load(infile)
 
 os.environ["OPENAI_API_KEY"] = config["open_ai_token"]
+model_version = config.get("llm_model_version", "gpt-4o")
 
-# TODO upvote, downvote
-
-VERSION = "1.0.0"
-MODEL_VERSION = "gpt-4o"
+VERSION = "1.1.0"
 
 FOOTER_TEXT = f"""
 Support Nissa on [Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)  
 version: {VERSION}  
-chat model: {MODEL_VERSION}
+chat model: {model_version}
 """
 
 st.set_page_config(
@@ -58,12 +57,16 @@ if "messages" not in st.session_state:
 if "agent" not in st.session_state:
 
     # setup tools and llm
-    llm = create_llm(MODEL_VERSION)
+    llm = create_llm(model_version)
     memory = create_memory(llm=llm)
 
     # tools
-    card_search_tool = CardSearchTool()
-    rules_search_tool = RulesSearchTool()
+    card_search_tool = CardSearchTool(
+        url=config.get("data_service_host", "http://localhost:8000/")
+    )
+    rules_search_tool = RulesSearchTool(
+        url=config.get("data_service_host", "http://localhost:8000/")
+    )
     judge_report_tool = JudgeReportTool()
     st.session_state.judge_tool = CallJudgeTool()
     st.session_state.deck_tool = UserDeckLookupTool()
@@ -137,14 +140,19 @@ if query := st.chat_input("What is up?"):
 
     # Display assistant response in chat message container
     with st.chat_message("nissa", avatar=nissa.PROFILE_PICTURE):
-        stream = nissa.astream_response(
-            agent_executor=st.session_state.agent,
-            query=query,
-            decks=list(st.session_state.deck_tool.decks),
-            container=st.status,
-        )
-        generator = to_sync_generator(stream)
-        response = st.write_stream(generator)
+        try:
+            stream = nissa.astream_response(
+                agent_executor=st.session_state.agent,
+                query=query,
+                decks=list(st.session_state.deck_tool.decks),
+                container=st.status,
+            )
+            generator = to_sync_generator(stream)
+            response = st.write_stream(generator)
+
+        except Exception as e:
+            logger.error(e)
+            response = "Sorry, something went wrong..."
 
     # TODO parse message
     st.session_state.messages.append(
