@@ -51,7 +51,7 @@ class CardSearchTool(BaseTool):
     def _run(
         self,
         query: str,
-        number_of_cards: int,
+        number_of_cards: int = 1,
         sample_results: bool = False,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
@@ -78,7 +78,7 @@ class CardSearchTool(BaseTool):
     async def _arun(
         self,
         query: str,
-        number_of_cards: int,
+        number_of_cards: int = 1,
         sample_results: bool = False,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
