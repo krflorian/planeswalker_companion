@@ -34,8 +34,8 @@ class RulesSearchTool(BaseTool):
     args_schema: Type[BaseModel] = RulesSearchInput
     url: str = "http://localhost:8000/"
     k: int = 10
-    threshold: float = 0.3
-    lasso_threshold: float = 0.1
+    threshold: float = 0.4
+    lasso_threshold: float = 0.2
     description = """
     Lookup Magic the Gathering rules and information about various keywords from trustworthy sources:
         - Comprehensive Rulebook
