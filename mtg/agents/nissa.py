@@ -4,8 +4,11 @@ import streamlit as st
 PROFILE_PICTURE = "./assets/favicon1.jpg"
 
 WELCOME_TEXT = """
-Hi, I'm Nissa!  
+Hi, I'm **Nissa**!  
 I can help you with all kinds of questions regarding Magic: the Gathering rules or help you with brewing a new deck.  
+I can interact with your decks and give you tipps on adding and removing cards.  
+You can upload your deck with the button on the left.
+
 You can support my learning and development here: 
 [Patreon](https://www.patreon.com/NissaPlaneswalkerCompanion)  
 """
@@ -52,7 +55,6 @@ async def astream_response(
     container: st.container,
     decks: list[str] = [],
 ):
-
     if decks:
         decks_string = "\n".join(["- " + deck for deck in decks])
     else:

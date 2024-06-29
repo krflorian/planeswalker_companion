@@ -1,8 +1,6 @@
 import streamlit as st
-from dotenv import load_dotenv
 
 from mtg.agents import create_llm, create_memory, create_chat_agent, create_judge_agent
-
 from mtg.agents import nissa, judge, user
 from mtg.tools import (
     CardSearchTool,
@@ -16,6 +14,11 @@ from mtg.utils.ui import to_sync_generator
 
 import os
 import yaml
+
+# TODO urls and card search for deck upload
+# TODO urls for all cards in text
+# TODO user and persistance for decks
+# TODO reset conversation button
 
 logger = get_logger("mtg-bot")
 with open("configs/config.yaml", "r") as infile:
@@ -55,7 +58,6 @@ if "messages" not in st.session_state:
     ]
 
 if "agent" not in st.session_state:
-
     # setup tools and llm
     llm = create_llm(model_version)
     memory = create_memory(llm=llm)
@@ -86,6 +88,7 @@ if "agent" not in st.session_state:
     )
     st.session_state.judge = create_judge_agent(
         system_message=judge.SYSTEM_MESSAGE,
+        prompt=judge.PROMPT,
         tools=[card_search_tool, rules_search_tool, judge_report_tool],
         memory=memory,
         model_name="gpt-4o",
@@ -94,13 +97,15 @@ if "agent" not in st.session_state:
 # HANDLE SIDEBAR
 # upload deck feature
 with st.sidebar:
-
     with st.popover("Upload Deck"):
         deck_name = st.text_input("Deck Name")
         st.write("Cards:")
         deck = st.text_area("Format: 1x Card Name", height=275)
 
         if st.button("Upload Deck", type="primary", use_container_width=True):
+            # TODO if not deck_name
+            # TODO add info to cards
+            # TODO add deck type
             st.session_state.deck_tool.decks[deck_name] = deck
             st.write(f"Successfully uploaded deck: '{deck_name}'")
 
@@ -118,7 +123,8 @@ with st.sidebar:
 
     # reset conversation
     if col2.button("Reset Conversation", use_container_width=True):
-        # TODO reset memory and chat history
+        st.session_state.agent.memory.clear()
+        st.session_state.messages = st.session_state.messages[:2]
         st.write("resetting conversation")
 
 # HANDLE CHAT

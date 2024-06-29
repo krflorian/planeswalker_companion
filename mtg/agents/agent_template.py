@@ -7,7 +7,6 @@ from langchain.agents.format_scratchpad import format_to_openai_functions
 from langchain.agents import AgentExecutor
 from langchain.tools import BaseTool
 from langchain.schema.runnable import RunnableLambda, RunnablePassthrough
-from operator import itemgetter
 from langchain.schema import SystemMessage
 from langchain.prompts import (
     ChatPromptTemplate,
@@ -26,7 +25,6 @@ load_dotenv()
 
 @cache
 def create_llm(model_name: str = "gpt-4o"):
-
     llm = ChatOpenAI(
         model=model_name,
         temperature=0.001,
@@ -47,6 +45,7 @@ def create_memory(llm):
         return_messages=True,
         max_token_limit=3000,
     )
+    memory.ai_prefix = "Nissa"
     return memory
 
 
@@ -94,9 +93,37 @@ def create_chat_agent(
     return agent_executor
 
 
+"""
+# stop after judge report 
+import json
+from langchain_core.agents import AgentActionMessageLog, AgentFinish
+
+
+def parse(output):
+    # If no function was invoked, return to user
+    if "function_call" not in output.additional_kwargs:
+        return AgentFinish(return_values={"output": output.content}, log=output.content)
+
+    # Parse out the function call
+    function_call = output.additional_kwargs["function_call"]
+    name = function_call["name"]
+    inputs = json.loads(function_call["arguments"])
+
+    # If the Response function was invoked, return to the user with the function inputs
+    if name == "Response":
+        return AgentFinish(return_values=inputs, log=str(function_call))
+    # Otherwise, return an agent action
+    else:
+        return AgentActionMessageLog(
+            tool=name, tool_input=inputs, log="", message_log=[output]
+        )
+"""
+
+
 def create_judge_agent(
     tools: list[BaseTool],
     system_message: str,
+    prompt: str,
     memory: BaseMemory,
     model_name: str = "gpt-4o",
 ):
@@ -105,7 +132,7 @@ def create_judge_agent(
     prompt = ChatPromptTemplate.from_messages(
         [
             SystemMessage(content=system_message),
-            MessagesPlaceholder(variable_name="history"),
+            HumanMessagePromptTemplate.from_template(prompt),
             MessagesPlaceholder(variable_name="agent_scratchpad"),
         ]
     )
@@ -120,7 +147,7 @@ def create_judge_agent(
             )
         )
         | RunnablePassthrough.assign(
-            history=RunnableLambda(memory.load_memory_variables) | itemgetter("history")
+            history=RunnableLambda(lambda x: memory.buffer_as_str)
         )
         | prompt
         | llm_with_functions
@@ -128,10 +155,7 @@ def create_judge_agent(
     )
 
     agent_executor = AgentExecutor(
-        agent=agent_chain,
-        tools=tools,
-        verbose=False,
-        handle_parsing_errors=True,
+        agent=agent_chain, tools=tools, verbose=False, handle_parsing_errors=True
     )
 
     return agent_executor
