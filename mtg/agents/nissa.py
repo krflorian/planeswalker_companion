@@ -55,7 +55,6 @@ async def astream_response(
     container: st.container,
     decks: list[str] = [],
 ):
-
     if decks:
         decks_string = "\n".join(["- " + deck for deck in decks])
     else:

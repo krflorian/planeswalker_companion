@@ -62,7 +62,6 @@ Obtain more information using the rules search tool by querying specific rules f
 
 
 async def astream_response(agent_executor: AgentExecutor, container: st.container):
-
     chunks = []
     with container("thinking...") as status:
         async for event in agent_executor.astream_events({}, version="v1"):

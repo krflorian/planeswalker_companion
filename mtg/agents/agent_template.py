@@ -25,7 +25,6 @@ load_dotenv()
 
 @cache
 def create_llm(model_name: str = "gpt-4o"):
-
     llm = ChatOpenAI(
         model=model_name,
         temperature=0.001,

@@ -58,7 +58,6 @@ if "messages" not in st.session_state:
     ]
 
 if "agent" not in st.session_state:
-
     # setup tools and llm
     llm = create_llm(model_version)
     memory = create_memory(llm=llm)
@@ -98,7 +97,6 @@ if "agent" not in st.session_state:
 # HANDLE SIDEBAR
 # upload deck feature
 with st.sidebar:
-
     with st.popover("Upload Deck"):
         deck_name = st.text_input("Deck Name")
         st.write("Cards:")
