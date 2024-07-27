@@ -27,6 +27,7 @@ with open("configs/config.yaml", "r") as infile:
 
 os.environ["OPENAI_API_KEY"] = config["open_ai_token"]
 model_version = config.get("llm_model_version", "gpt-4o")
+logger.info(f"dataservice url: {config.get('data_service_host', 'not found')}")
 
 VERSION = "1.1.0"
 
@@ -163,7 +164,7 @@ if query := st.chat_input("What is up?"):
     parsed_response = parse_card_names(
         response,
         url=config.get("data_service_host", "http://localhost:8000/"),
-        endpoint="parse_card_urls/",
+        endpoint="parse_card_urls",
     )
     st.session_state.messages.append(
         {"role": "nissa", "content": parsed_response, "image": nissa.PROFILE_PICTURE}
