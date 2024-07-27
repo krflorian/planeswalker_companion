@@ -4,7 +4,7 @@ from langchain.tools import BaseTool
 
 from pydantic import BaseModel, Field
 
-from typing import Optional, Type
+from typing import Optional, Type, Literal
 from langchain.callbacks.manager import (
     AsyncCallbackManagerForToolRun,
     CallbackManagerForToolRun,
@@ -24,41 +24,60 @@ async def send_post_request(url, data):
 
 
 class CardSearchInput(BaseModel):
-    query: str = Field(description="should be a search query")
-    number_of_cards: int = Field(
-        default=1, description="number of cards that should be returned"
+    query: str = Field(
+        description="should be a search query for the name of the card, the oracle text or the card type."
     )
-    sample_results: Optional[bool] = Field(
-        default=False,
-        description="For more creative responses sample the results from a pool of found cards",
+    number_of_cards: int = Field(
+        default=1, description="Number of cards that should be returned"
+    )
+    keywords: list[str] = Field(
+        default_factory=list,
+        description="Filter for certain Magic the Gathering Keywords. e.g. 'First Strike', 'Deathtouch'... ",
+    )
+    color_identity: list[Literal["W", "U", "B", "R", "G"]] = Field(
+        default_factory=list,
+        description="Filter for the color identity of the cards. e.g. 'W', 'U', 'B', 'R', 'G'",
+    )
+    legality: str = Field(
+        default=None,
+        description="Filter for if the card is legal is a certain playmode e.g. 'commander', 'modern'...",
     )
 
 
 class CardSearchTool(BaseTool):
     name = "mtg_card_search"
     description = (
-        "Search for cards in a magic the gathering card database with all cards up to 14.05.2024."
-        "You will receive all card info including card specific rulings, attributes and price"
-        "You can also choose number of cards you want to receive. For arbitrary queries that are not specific cards, ask for multiple results."
-        "An arbitrary query could be 'black removal spells' number_of_cards = 5 sample_results = True"
-        "A card name query could be 'Black Lotus' number_of_cards = 1 sample_results = False"
+        "Search for cards in a magic the gathering card database with all cards up to 22.07.2024. "
+        "The Query parameter will search for the oracle text or name of the card. So you have to rephrase the question of the User "
+        "to words that will appear on the oracle text of the card."
+        "You will receive all card info including card specific rulings, attributes, price and URL. "
+        "You can also choose number of cards you want to receive. For arbitrary queries that are not specific cards, ask for multiple results. "
+        "A query for 'black removal spells' could be: query = 'destroy creature', number_of_cards = 10, color_identity = ['B'] "
+        "A query for 'white removal spells' could be: query = 'exile creature', number_of_cards = 10, color_identity = ['W'] "
+        "A query for 'white and blue blink spells' could be: query = 'exile and return to the battlefield', number_of_cards = 10, color_identity = ['W', 'U'] "
+        "A card name query for the card 'Black Lotus' could be: query = 'Black Lotus' number_of_cards = 1"
     )
     args_schema: Type[BaseModel] = CardSearchInput
     url: str = "http://localhost:8000/"
-    threshold: float = 0.4
-    lasso_threshold: float = 0.1
+    threshold: float = 0.5
 
     def _run(
         self,
         query: str,
         number_of_cards: int = 1,
-        sample_results: bool = False,
+        keywords: list[str] = [],
+        color_identity: list[str] = [],
+        legality: str = None,
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
-        """Use the tool."""
+        """Use the tool to search cards."""
 
         logger.info(
-            f"Triggering Card Search with query: {query}, number_of_cards: {number_of_cards}, sample_results: {sample_results}"
+            (
+                f"Triggering Card Search with query: {query}, number_of_cards: {number_of_cards}, "
+                f"keywords: {','.join(keywords)}, color_identity: {','.join(color_identity)} "
+                f"legality: {legality}"
+            )
         )
 
         response = requests.post(
@@ -66,9 +85,10 @@ class CardSearchTool(BaseTool):
             json={
                 "text": query,
                 "k": number_of_cards,
+                "keywords": keywords,
+                "color_identity": color_identity,
+                "legality": legality,
                 "threshold": self.threshold,
-                "lasso_threshold": self.lasso_threshold,
-                "sample_results": sample_results,
             },
         )
         response = response.json()
@@ -79,21 +99,28 @@ class CardSearchTool(BaseTool):
         self,
         query: str,
         number_of_cards: int = 1,
-        sample_results: bool = False,
+        keywords: list[str] = [],
+        color_identity: list[str] = [],
+        legality: str = None,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
         """Use the tool asynchronously."""
 
         logger.info(
-            f"Triggering Card Search with query: {query}, number_of_cards: {number_of_cards}, sample_results: {sample_results}"
+            (
+                f"Triggering Card Search with query: {query}, number_of_cards: {number_of_cards}, "
+                f"keywords: {','.join(keywords)}, color_identity: {','.join(color_identity)} "
+                f"legality: {legality}"
+            )
         )
 
         payload = {
             "text": query,
             "k": number_of_cards,
+            "keywords": keywords,
+            "color_identity": color_identity,
+            "legality": legality,
             "threshold": self.threshold,
-            "lasso_threshold": self.lasso_threshold,
-            "sample_results": sample_results,
         }
         response = await send_post_request(f"{self.url}cards/", data=payload)
         cards_text = self._parse_response(response)

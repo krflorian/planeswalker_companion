@@ -11,6 +11,7 @@ from mtg.tools import (
 )
 from mtg.utils.logging import get_logger
 from mtg.utils.ui import to_sync_generator
+from mtg.utils.url_parsing import parse_card_names
 
 import os
 import yaml
@@ -136,7 +137,6 @@ for message in st.session_state.messages:
 # Triggers when user adds input
 if query := st.chat_input("What is up?"):
     # Add user message to chat history
-    # TODO parse message
     st.session_state.messages.append(
         {"role": "user", "content": query, "image": user.PROFILE_PICTURE}
     )
@@ -160,10 +160,16 @@ if query := st.chat_input("What is up?"):
             logger.error(e)
             response = "Sorry, something went wrong..."
 
-    # TODO parse message
-    st.session_state.messages.append(
-        {"role": "nissa", "content": response, "image": nissa.PROFILE_PICTURE}
+    parsed_response = parse_card_names(
+        response,
+        url=config.get("data_service_host", "http://localhost:8000/"),
+        endpoint="parse_card_urls/",
     )
+    st.session_state.messages.append(
+        {"role": "nissa", "content": parsed_response, "image": nissa.PROFILE_PICTURE}
+    )
+    st.rerun()
+
 
 if st.session_state.judge_tool.is_called:
     # TODO does not work when nissa calls the judge
@@ -175,7 +181,14 @@ if st.session_state.judge_tool.is_called:
         )
         generator = to_sync_generator(stream)
         response = st.write_stream(generator)
+
+    parsed_response = parse_card_names(
+        response,
+        url=config.get("data_service_host", "http://localhost:8000/"),
+        endpoint="parse_card_urls/",
+    )
     st.session_state.messages.append(
-        {"role": "judge", "content": response, "image": judge.PROFILE_PICTURE}
+        {"role": "judge", "content": parsed_response, "image": judge.PROFILE_PICTURE}
     )
     st.session_state.judge_tool.is_called = False
+    st.rerun()
