@@ -18,19 +18,6 @@ Always cite your sources with url.
 
 """
 
-"""
-
-# Example usage of a Judge Report:
-explanation = "Creatures with first strike deal damage before other creatures in combat.
-Therefore, if a creature with first strike deals sufficient damage to kill an opposing creature without this ability,
-it will not suffer any combat damage from that creature in return. Even thought the creature with deathtouch would destroy 
-the creature with first strike, it cannot do so if it is destroyed first."
-sources = [
-    {"title": "Deathtouch Explanation", "url": " "https://en.wikipedia.org/wiki/List_of_Magic:_The_Gathering_keywords""},
-    {"title": "First Strike Comprehensive Rules", "url": "https://yawgatog.com/resources/magic-rules/#R7027c"}
-]
-"""
-
 PROMPT = """
 <Chat History:> 
 {history}
