@@ -35,7 +35,6 @@ class RulesSearchTool(BaseTool):
     url: str = "http://localhost:8000/"
     k: int = 10
     threshold: float = 0.4
-    lasso_threshold: float = 0.2
     description = """
     Lookup Magic the Gathering rules and information about various keywords from trustworthy sources:
         - Comprehensive Rulebook
@@ -59,7 +58,6 @@ class RulesSearchTool(BaseTool):
                 "text": query,
                 "k": self.k,
                 "threshold": self.threshold,
-                "lasso_threshold": self.lasso_threshold,
             },
         )
         response = response.json()
@@ -78,7 +76,6 @@ class RulesSearchTool(BaseTool):
             "text": query,
             "k": self.k,
             "threshold": self.threshold,
-            "lasso_threshold": self.lasso_threshold,
         }
         response = await send_post_request(f"{self.url}rules/", data=payload)
         return self._parse_response(response)
