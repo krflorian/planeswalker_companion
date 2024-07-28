@@ -4,30 +4,22 @@ from mtg.agents import create_llm, create_memory, create_chat_agent, create_judg
 from mtg.agents import nissa, judge, user
 from mtg.tools import (
     CardSearchTool,
+    CardNameSearchTool,
     RulesSearchTool,
     UserDeckLookupTool,
-    CallJudgeTool,
     JudgeReportTool,
 )
 from mtg.utils.logging import get_logger
-from mtg.utils.ui import to_sync_generator
-from mtg.utils.url_parsing import parse_card_names
+from mtg.utils import parse_card_names, load_config, to_sync_generator
 
-import os
-import yaml
 
 # TODO urls and card search for deck upload
-# TODO urls for all cards in text
 # TODO user and persistance for decks
-# TODO reset conversation button
 
 logger = get_logger("mtg-bot")
-with open("configs/config.yaml", "r") as infile:
-    config = yaml.safe_load(infile)
+config = load_config("configs/config.yaml")
 
-os.environ["OPENAI_API_KEY"] = config["open_ai_token"]
-model_version = config.get("llm_model_version", "gpt-4o")
-logger.info(f"dataservice url: {config.get('data_service_host', 'not found')}")
+model_version = config.llm_settings.llm_model_version
 
 VERSION = "1.1.0"
 
@@ -59,6 +51,9 @@ if "messages" not in st.session_state:
         },
     ]
 
+if "judge_called" not in st.session_state:
+    st.session_state.judge_called = False
+
 if "agent" not in st.session_state:
     # setup tools and llm
     llm = create_llm(model_version)
@@ -66,13 +61,20 @@ if "agent" not in st.session_state:
 
     # tools
     card_search_tool = CardSearchTool(
-        url=config.get("data_service_host", "http://localhost:8000/")
+        url=config.dataservice_settings.host,
+        threshold=config.dataservice_settings.card_search_threshold,
+        number_of_cards=config.dataservice_settings.card_search_number_of_cards,
     )
+
+    card_name_search_tool = CardNameSearchTool(
+        url=config.dataservice_settings.host,
+    )
+
     rules_search_tool = RulesSearchTool(
-        url=config.get("data_service_host", "http://localhost:8000/")
+        url=config.dataservice_settings.host,
+        threshold=config.dataservice_settings.rules_search_threshold,
     )
     judge_report_tool = JudgeReportTool()
-    st.session_state.judge_tool = CallJudgeTool()
     st.session_state.deck_tool = UserDeckLookupTool()
 
     # agents
@@ -80,9 +82,9 @@ if "agent" not in st.session_state:
         system_message=nissa.SYSTEM_MESSAGE,
         prompt=nissa.PROMPT,
         tools=[
-            st.session_state.judge_tool,
             st.session_state.deck_tool,
             card_search_tool,
+            card_name_search_tool,
             rules_search_tool,
         ],
         memory=memory,
@@ -91,7 +93,7 @@ if "agent" not in st.session_state:
     st.session_state.judge = create_judge_agent(
         system_message=judge.SYSTEM_MESSAGE,
         prompt=judge.PROMPT,
-        tools=[card_search_tool, rules_search_tool, judge_report_tool],
+        tools=[card_name_search_tool, rules_search_tool, judge_report_tool],
         memory=memory,
         model_name="gpt-4o",
     )
@@ -121,7 +123,7 @@ with st.sidebar:
 
     # call judge
     if col1.button("Call Judge", type="primary", use_container_width=True):
-        st.session_state.judge_tool.is_called = True
+        st.session_state.judge_called = True
 
     # reset conversation
     if col2.button("Reset Conversation", use_container_width=True):
@@ -163,16 +165,20 @@ if query := st.chat_input("What is up?"):
 
     parsed_response = parse_card_names(
         response,
-        url=config.get("data_service_host", "http://localhost:8000/"),
+        url=config.dataservice_settings.host,
         endpoint="parse_card_urls",
     )
+
+    if "@judge" in parsed_response:
+        st.session_state.judge_called = True
+
     st.session_state.messages.append(
         {"role": "nissa", "content": parsed_response, "image": nissa.PROFILE_PICTURE}
     )
     st.rerun()
 
 
-if st.session_state.judge_tool.is_called:
+if st.session_state.judge_called:
     # TODO does not work when nissa calls the judge
     # Display assistant response in chat message container
     with st.chat_message("judge", avatar=judge.PROFILE_PICTURE):
@@ -185,11 +191,11 @@ if st.session_state.judge_tool.is_called:
 
     parsed_response = parse_card_names(
         response,
-        url=config.get("data_service_host", "http://localhost:8000/"),
+        url=config.dataservice_settings.host,
         endpoint="parse_card_urls/",
     )
     st.session_state.messages.append(
         {"role": "judge", "content": parsed_response, "image": judge.PROFILE_PICTURE}
     )
-    st.session_state.judge_tool.is_called = False
+    st.session_state.judge_called = False
     st.rerun()

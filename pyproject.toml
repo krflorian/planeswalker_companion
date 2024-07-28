@@ -17,7 +17,7 @@ tiktoken = "^0.5.1"
 pydantic = "^2.5.3"
 langchain = "^0.1.20"
 langchain-openai = "^0.1.6"
-streamlit = "^1.35.0"
+streamlit = "^1.37.0"
 python-dotenv = "^1.0.1"
 
 [tool.poetry.group.dev.dependencies]

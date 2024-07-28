@@ -1,4 +1,5 @@
 import logging
+from functools import cache
 
 
 class CustomFormatter(logging.Formatter):
@@ -25,26 +26,29 @@ class CustomFormatter(logging.Formatter):
         return formatter.format(record)
 
 
+@cache
 def get_logger(name="mtg-bot"):
     # logger
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
     logger.propagate = False
 
-    # file handler
-    file_handler = logging.FileHandler(
-        "data/logs/chat_logs.log", mode="a", encoding="utf-8"
-    )
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(CustomFormatter())
+    if not logger.handlers:
 
-    # create console handler with a higher log level
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
-    console_handler.setFormatter(CustomFormatter())
+        # file handler
+        file_handler = logging.FileHandler(
+            "data/logs/chat_logs.log", mode="a", encoding="utf-8"
+        )
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(CustomFormatter())
 
-    # add handlers
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
+        # create console handler with a higher log level
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        console_handler.setFormatter(CustomFormatter())
+
+        # add handlers
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
 
     return logger

@@ -17,6 +17,7 @@ RUN pip install --no-cache-dir --upgrade -r requirements.txt
 COPY ./mtg /app/mtg
 COPY ./assets /app/assets
 COPY ./app.py /app/app.py
+COPY ./.streamlit /app/.streamlit 
 
 #create non-root user and change /app permissions
 RUN chmod -R 555 /app
