@@ -129,7 +129,7 @@ cp ./config/config_example.yaml ./config/config.yaml && nano ./config/config.yam
 4. Run the bot:
 ```shell 
 poetry shell 
-python app.py 
+streamlit run app.py
 ```
 
 # License

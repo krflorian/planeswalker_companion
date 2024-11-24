@@ -5,7 +5,7 @@ description = ""
 authors = ["florian.krempl <florian.krempl@outlook.com>"]
 license = "mit"
 readme = "README.md"
-packages = [{from ="src", include = "mtg" }]
+packages = [{include = "mtg" }]
 
 [tool.poetry.dependencies]
 python = "^3.11"

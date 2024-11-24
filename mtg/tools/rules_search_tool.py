@@ -53,7 +53,7 @@ class RulesSearchTool(BaseTool):
         logger.info(f"Triggering Rules Search with query: {query}")
 
         response = requests.post(
-            url=f"{self.url}rules/",
+            url=f"{self.url}rules",
             json={
                 "text": query,
                 "k": self.k,
@@ -77,7 +77,7 @@ class RulesSearchTool(BaseTool):
             "k": self.k,
             "threshold": self.threshold,
         }
-        response = await send_post_request(f"{self.url}rules/", data=payload)
+        response = await send_post_request(f"{self.url}rules", data=payload)
         return self._parse_response(response)
 
     def _parse_response(self, response: dict) -> list[Document]:
