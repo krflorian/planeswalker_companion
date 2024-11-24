@@ -83,7 +83,7 @@ class CardSearchTool(BaseTool):
         )
 
         response = requests.post(
-            url=f"{self.url}cards/",
+            url=f"{self.url}cards",
             json={
                 "text": query,
                 "k": self.number_of_cards,
@@ -124,7 +124,7 @@ class CardSearchTool(BaseTool):
             "legality": legality,
             "threshold": self.threshold,
         }
-        response = await send_post_request(f"{self.url}cards/", data=payload)
+        response = await send_post_request(f"{self.url}cards", data=payload)
         cards_text = self._parse_response(response)
         return cards_text
 

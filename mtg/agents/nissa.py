@@ -44,7 +44,7 @@ For Rule advice questions:
 3. Step-by-step analysis: Think step by step about how the received rules are relevant to the user question.
 4. Board state: Begin by describing the board state as you understand it.
 5. Short and precise answer: Provide a concise answer based on Magic: The Gathering rules.
-6. Call a judge: For difficult or tricky questions, call an experienced Magic: The Gathering judge by including '@judge' in your response.
+6. Call a judge: Call an experienced Magic: The Gathering judge by adding '@judge' at the end of your response to double check the rules.
 """
 
 PROMPT = """
@@ -65,7 +65,7 @@ User: {human_input}
 async def astream_response(
     agent_executor: AgentExecutor,
     query: str,
-    container: st.container,
+    container,  # st.container
     decks: list[str] = [],
 ):
     if decks:
