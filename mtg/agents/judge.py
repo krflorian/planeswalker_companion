@@ -48,10 +48,21 @@ Obtain more information using the rules search tool by querying specific rules f
 """
 
 
-async def astream_response(agent_executor: AgentExecutor, container: st.container):
+async def astream_response(
+    agent_executor: AgentExecutor,
+    container: st.container,
+    query: str = None,
+    callback_handler: callable = None,
+    trace_id: str = None,
+):
     chunks = []
     with container("thinking...") as status:
-        async for event in agent_executor.astream_events({}, version="v1"):
+        print("trace id", trace_id)
+        async for event in agent_executor.astream_events(
+            {},
+            version="v1",
+            config={"callbacks": [callback_handler], "run_id": trace_id},
+        ):
             kind = event["event"]
             if kind == "on_tool_start":
                 status.update(
@@ -66,7 +77,7 @@ async def astream_response(agent_executor: AgentExecutor, container: st.containe
             if kind == "on_chat_model_stream":
                 content = event["data"]["chunk"].content
                 if content:
-                    status.update(label=f"Finished research...", state="complete")
+                    status.update(label="Finished research...", state="complete")
                     # Empty content in the context of OpenAI means
                     # that the model is asking for a tool to be invoked.
                     # So we only print non-empty content

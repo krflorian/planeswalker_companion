@@ -66,7 +66,9 @@ async def astream_response(
     agent_executor: AgentExecutor,
     query: str,
     container,  # st.container
+    trace_id: str = None,
     decks: list[str] = [],
+    callback_handler: callable = None,
 ):
     if decks:
         decks_string = "\n".join(["- " + deck for deck in decks])
@@ -75,9 +77,11 @@ async def astream_response(
 
     chunks = []
     with container("thinking...") as status:
+        print("trace id", trace_id)
         async for event in agent_executor.astream_events(
             {"human_input": query, "user_decks": decks_string},
             version="v1",
+            config={"callbacks": [callback_handler], "run_id": trace_id},
         ):
             kind = event["event"]
             if kind == "on_tool_start":
@@ -93,7 +97,7 @@ async def astream_response(
             if kind == "on_chat_model_stream":
                 content = event["data"]["chunk"].content
                 if content:
-                    status.update(label=f"Finished research...", state="complete")
+                    status.update(label="Finished research...", state="complete")
                     # Empty content in the context of OpenAI means
                     # that the model is asking for a tool to be invoked.
                     # So we only print non-empty content

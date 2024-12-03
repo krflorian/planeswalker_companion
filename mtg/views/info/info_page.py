@@ -9,6 +9,26 @@ st.set_page_config(
 
 st.markdown(
     """
+
+    <style>
+
+    /* Hide the Streamlit header and menu */
+
+    header {visibility: hidden;}
+
+    /* Optionally, hide the footer */
+
+    .streamlit-footer {display: none;}
+
+    </style>
+
+    """,
+    unsafe_allow_html=True,
+)
+
+
+st.markdown(
+    """
 # Contact 
 ### Florian Krempl  
 https://github.com/krflorian  

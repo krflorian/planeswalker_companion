@@ -2,18 +2,20 @@ import os
 from pathlib import Path
 import yaml
 from pydantic import BaseModel, Field
+from functools import cache
 
 
-def load_config(filepath: Path):
-    filepath = Path(filepath)
+class LLMSettings(BaseModel):
+    open_ai_token: str
+    llm_model_version: str = Field(
+        default="gpt-4o", description="openai model version powering the agents"
+    )
 
-    with filepath.open("r") as infile:
-        config = yaml.safe_load(infile)
 
-    config = MTGBotConfig(**config)
-    os.environ["OPENAI_API_KEY"] = config.llm_settings.open_ai_token
-
-    return config
+class LangfuseSettings(BaseModel):
+    secret_key: str
+    public_key: str
+    host: str
 
 
 class DataserviceSettings(BaseModel):
@@ -34,13 +36,23 @@ class DataserviceSettings(BaseModel):
     )
 
 
-class LLMSettings(BaseModel):
-    open_ai_token: str
-    llm_model_version: str = Field(
-        default="gpt-4o", description="openai model version powering the agents"
-    )
-
-
 class MTGBotConfig(BaseModel):
     dataservice_settings: DataserviceSettings
     llm_settings: LLMSettings
+    langfuse_settings: LangfuseSettings
+
+
+@cache
+def load_config(filepath: Path) -> MTGBotConfig:
+    filepath = Path(filepath)
+
+    with filepath.open("r") as infile:
+        config = yaml.safe_load(infile)
+
+    config = MTGBotConfig(**config)
+    os.environ["OPENAI_API_KEY"] = config.llm_settings.open_ai_token
+    os.environ["LANGFUSE_PUBLIC_KEY"] = config.langfuse_settings.public_key
+    os.environ["LANGFUSE_SECRET_KEY"] = config.langfuse_settings.secret_key
+    os.environ["LANGFUSE_HOST"] = config.langfuse_settings.host
+
+    return config
