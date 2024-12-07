@@ -1,5 +1,5 @@
 from enum import Enum
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from .card import Card
 from .document import Document
 

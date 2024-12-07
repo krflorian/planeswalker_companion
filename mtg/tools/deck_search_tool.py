@@ -1,4 +1,3 @@
-from pathlib import Path
 from langchain.tools import BaseTool
 
 from pydantic import BaseModel, Field
@@ -19,8 +18,8 @@ class DeckSearchInput(BaseModel):
 
 
 class UserDeckLookupTool(BaseTool):
-    name = "user_deck_lookup"
-    description = "Look at decks that the user uploaded"
+    name: str = "user_deck_lookup"
+    description: str = "Look at decks that the user uploaded"
     args_schema: Type[BaseModel] = DeckSearchInput
     decks: dict[str, str] = {}
 

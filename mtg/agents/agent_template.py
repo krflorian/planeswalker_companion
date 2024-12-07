@@ -36,9 +36,8 @@ def create_llm(model_name: str = "gpt-4o"):
     return llm
 
 
-def create_memory(llm):
+def create_memory():
     memory = ConversationBufferMemory(
-        llm=llm,
         memory_key="history",
         input_key="human_input",
         output_key="output",

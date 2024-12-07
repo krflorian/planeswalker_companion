@@ -30,12 +30,12 @@ class RulesSearchInput(BaseModel):
 
 
 class RulesSearchTool(BaseTool):
-    name = "mtg_rules_search"
+    name: str = "mtg_rules_search"
     args_schema: Type[BaseModel] = RulesSearchInput
     url: str = "http://localhost:8000/"
     k: int = 10
     threshold: float = 0.4
-    description = """
+    description: str = """
     Lookup Magic the Gathering rules and information about various keywords from trustworthy sources:
         - Comprehensive Rulebook
         - Rulesguru.com

@@ -34,7 +34,6 @@ def get_logger(name="mtg-bot"):
     logger.propagate = False
 
     if not logger.handlers:
-
         # file handler
         file_handler = logging.FileHandler(
             "data/logs/chat_logs.log", mode="a", encoding="utf-8"

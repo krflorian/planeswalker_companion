@@ -6,14 +6,14 @@
     "configurations": [
         {
             "name": "bot",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "streamlit",
             "console": "integratedTerminal",
             "args": [
                 "run",
                 "app.py"
-            ]
+            ],
             "justMyCode": true
         }
     ]

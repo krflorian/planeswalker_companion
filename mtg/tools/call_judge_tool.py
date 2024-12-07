@@ -20,8 +20,8 @@ class CallJudgeInput(BaseModel):
 
 
 class CallJudgeTool(BaseTool):
-    name = "call_mtg_judge"
-    description = "Calls a judge that double checks rulings. Judge must be called in case the user asks rules questions"
+    name: str = "call_mtg_judge"
+    description: str = "Calls a judge that double checks rulings. Judge must be called in case the user asks rules questions"
     question: str = None
     args_schema: Type[BaseModel] = CallJudgeInput
     is_called: bool = False

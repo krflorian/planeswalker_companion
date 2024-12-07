@@ -1,6 +1,6 @@
 from langchain.tools import BaseTool
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from typing import Optional, Type
 from langchain.callbacks.manager import (
@@ -30,8 +30,8 @@ class JudgeReport(BaseModel):
 
 
 class JudgeReportTool(BaseTool):
-    name = "judge_report"
-    description = "A structured Report on why a statement is or is not True, with sources and urls for the explanation."
+    name: str = "judge_report"
+    description: str = "A structured Report on why a statement is or is not True, with sources and urls for the explanation."
     args_schema: Type[BaseModel] = JudgeReport
 
     def _run(

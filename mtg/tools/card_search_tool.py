@@ -49,8 +49,8 @@ class CardSearchInput(BaseModel):
 
 
 class CardSearchTool(BaseTool):
-    name = "list_mtg_cards"
-    description = (
+    name: str = "list_mtg_cards"
+    description: str = (
         "Search for multiple cards in a magic the gathering card database."
         "The Query parameter will search for the oracle text, type and subtype."
         "So you have to rephrase the question of the User to words that will appear on the oracle text of the card."
@@ -102,7 +102,6 @@ class CardSearchTool(BaseTool):
         query: str,
         keywords: list[str] = [],
         color_identity: list[str] = [],
-        number_of_cards: Optional[int] = None,
         legality: Optional[str] = None,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:
@@ -158,8 +157,8 @@ class CardNameSearchInput(BaseModel):
 
 
 class CardNameSearchTool(CardSearchTool):
-    name = "search_mtg_card_name"
-    description = (
+    name: str = "search_mtg_card_name"
+    description: str = (
         "Search for a specific magic the gathering card in the card database. "
         "Example: card_name = 'Black Lotus'"
     )
