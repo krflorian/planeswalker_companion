@@ -3,14 +3,17 @@ import streamlit as st
 from mtg.utils.logging import get_logger
 from uuid import uuid4
 from mtg.agents import nissa, judge, user
-from mtg.utils import parse_card_names, to_sync_generator, MTGBotConfig
+from mtg.utils import (
+    parse_card_names,
+    to_sync_generator,
+    MTGBotConfig,
+    cookie_controller,
+)
 
 from datetime import datetime, timedelta
 from langfuse import Langfuse
-from streamlit_cookies_controller import CookieController
 
 
-controller = CookieController()
 langfuse = Langfuse()
 
 logger = get_logger("mtg-bot")
@@ -149,7 +152,7 @@ def call_agent(
         waiting_time_duration=config.rate_limit_settings.waiting_time
     )
     if request_count > config.rate_limit_settings.max_requests:
-        expiration_date = controller.get("planeswalker/expiration_date")
+        expiration_date = cookie_controller.get("planeswalker/expiration_date")
         logger.info(f"hit rate limit - will end at {expiration_date}")
         return RATE_LIMIT_TEXT
 
@@ -182,12 +185,12 @@ def call_agent(
 def increase_request_count(waiting_time_duration: int) -> int:
     """check cookies for request count and increase by one, also set expiration date."""
 
-    request_count = controller.get("planeswalker/request_count") or 0
-    expiration_date = controller.get("planeswalker/expiration_date")
+    request_count = cookie_controller.get("planeswalker/request_count") or 0
+    expiration_date = cookie_controller.get("planeswalker/expiration_date")
 
     if expiration_date is None:
         expiration_date = datetime.now() + timedelta(minutes=waiting_time_duration)
-        controller.set(
+        cookie_controller.set(
             "planeswalker/expiration_date",
             expiration_date.isoformat(),
             expires=expiration_date,
@@ -199,6 +202,8 @@ def increase_request_count(waiting_time_duration: int) -> int:
             request_count = 0
 
     request_count += 1
-    controller.set("planeswalker/request_count", request_count, expires=expiration_date)
+    cookie_controller.set(
+        "planeswalker/request_count", request_count, expires=expiration_date
+    )
     logger.info(f"request count {request_count} - expiration date {expiration_date}")
     return request_count
