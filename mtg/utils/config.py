@@ -7,8 +7,13 @@ from functools import cache
 
 class LLMSettings(BaseModel):
     open_ai_token: str
-    llm_model_version: str = Field(
-        default="gpt-4o", description="openai model version powering the agents"
+    nissa_llm_model_version: str = Field(
+        default="gpt-4o-mini",
+        description="openai model version powering the main agent nissa",
+    )
+    judge_llm_model_version: str = Field(
+        default="gpt-4o-mini",
+        description="openai model version powering the secondary agent the judge",
     )
 
 
@@ -36,10 +41,16 @@ class DataserviceSettings(BaseModel):
     )
 
 
+class RateLimitSettings(BaseModel):
+    max_requests: int = Field(description="Maximum requests per time period")
+    waiting_time: int = Field(description="waiting time in minutes")
+
+
 class MTGBotConfig(BaseModel):
     dataservice_settings: DataserviceSettings
     llm_settings: LLMSettings
     langfuse_settings: LangfuseSettings
+    rate_limit_settings: RateLimitSettings
 
 
 @cache

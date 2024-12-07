@@ -1,7 +1,8 @@
 import streamlit as st
 from uuid import uuid4
+from langfuse.callback import CallbackHandler
 
-from mtg.agents import create_llm, create_memory, create_chat_agent, create_judge_agent
+from mtg.agents import create_memory, create_chat_agent, create_judge_agent
 from mtg.agents import nissa, judge
 from mtg.tools import (
     CardSearchTool,
@@ -12,23 +13,27 @@ from mtg.tools import (
 )
 from mtg.utils.logging import get_logger
 from mtg.utils import load_config
-from mtg.views.chat.sidebar import handle_sidebar
-from mtg.views.chat.chat_interface import handle_chat
-from mtg.views.chat.deck_upload import handle_deck_upload_screen
-from langfuse.callback import CallbackHandler
 
 
 # setup
-logger = get_logger("mtg-bot")
-
-config = load_config("configs/config.yaml")
-
-
 st.set_page_config(
     page_title="Nissa",
     page_icon=nissa.PROFILE_PICTURE,
     layout="wide",
 )
+
+from mtg.views.chat.sidebar import handle_sidebar
+from mtg.views.chat.chat_interface import handle_chat
+from mtg.views.chat.deck_upload import handle_deck_upload_screen
+from streamlit_cookies_controller import CookieController
+
+logger = get_logger("mtg-bot")
+
+config = load_config("configs/config.yaml")
+
+controller = CookieController()
+langfuse_handler = CallbackHandler()
+
 
 # page
 st.markdown(
@@ -49,6 +54,27 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+
+# Function to handle cookie preferences
+@st.dialog("Cookie Preferences")
+def handle_cookie_preferences():
+    st.write(
+        """
+We Value Your Privacy  
+Our website uses cookies to enhance your experience and provide essential functionality.  
+We use cookies to track user requests for rate limiting and collect anonymized chat message data to continuously improve Nissas Answers.
+
+You can learn more about how we handle your data in our [Privacy Policy](https://nissa.planeswalkercompanion.com/info_page).
+"""
+    )
+    # accept_ads = st.checkbox("Accept cookies for ads")
+    _ = st.checkbox("Accept cookies for performance", value=True, disabled=True)
+
+    if st.button("Save Preferences"):
+        controller.set("planeswalker/performance_cookies", True)
+        st.success("Your preferences have been saved! 🎉")
+        st.rerun()
 
 
 # HANDLE STATE
@@ -73,8 +99,7 @@ if not st.session_state.state.messages:
 if "agent" not in st.session_state:
     # add agent, judge + deck tool to session state
     # setup tools and llm
-    llm = create_llm(config.llm_settings.llm_model_version)
-    memory = create_memory(llm=llm)
+    memory = create_memory()
 
     # tools
     card_search_tool = CardSearchTool(
@@ -105,7 +130,7 @@ if "agent" not in st.session_state:
             rules_search_tool,
         ],
         memory=memory,
-        model_name=config.llm_settings.llm_model_version,
+        model_name=config.llm_settings.nissa_llm_model_version,
     )
 
     st.session_state.judge = create_judge_agent(
@@ -113,13 +138,14 @@ if "agent" not in st.session_state:
         prompt=judge.PROMPT,
         tools=[card_name_search_tool, rules_search_tool, judge_report_tool],
         memory=memory,
-        model_name=config.llm_settings.llm_model_version,
+        model_name=config.llm_settings.judge_llm_model_version,
     )
 
 
-langfuse_handler = CallbackHandler()
+accepted_cookies = controller.get("planeswalker/performance_cookies")
+if not accepted_cookies:
+    handle_cookie_preferences()
+
 handle_sidebar()
 handle_deck_upload_screen()
-handle_chat(
-    dataservice_host=config.dataservice_settings.host, callback_handler=langfuse_handler
-)
+handle_chat(config=config, callback_handler=langfuse_handler)

@@ -102,7 +102,6 @@ class CardSearchTool(BaseTool):
         query: str,
         keywords: list[str] = [],
         color_identity: list[str] = [],
-        number_of_cards: Optional[int] = None,
         legality: Optional[str] = None,
         run_manager: Optional[AsyncCallbackManagerForToolRun] = None,
     ) -> str:

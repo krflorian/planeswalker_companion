@@ -9,11 +9,12 @@ def handle_sidebar():
         col1, col2 = st.columns(2)
         call_judge_button(col2)
         reset_conversation_button(col1)
-        ad_window()
+        # TODO add ads
+        # ad_window()
 
 
 def toggle_deck_upload_popover():
-    st.session_state.state.deck_upload_popover = True
+    st.session_state.state.deck_upload_triggered = True
 
 
 def deck_upload():

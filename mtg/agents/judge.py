@@ -1,5 +1,6 @@
 from langchain.agents import AgentExecutor
 import streamlit as st
+from streamlit.delta_generator import DeltaGenerator
 
 PROFILE_PICTURE = "./assets/professor3.jpg"
 
@@ -50,10 +51,11 @@ Obtain more information using the rules search tool by querying specific rules f
 
 async def astream_response(
     agent_executor: AgentExecutor,
-    container: st.container,
+    container: DeltaGenerator,
     query: str = None,
     callback_handler: callable = None,
     trace_id: str = None,
+    session_id: str = None,
 ):
     chunks = []
     with container("thinking...") as status:
@@ -61,7 +63,14 @@ async def astream_response(
         async for event in agent_executor.astream_events(
             {},
             version="v1",
-            config={"callbacks": [callback_handler], "run_id": trace_id},
+            config={
+                "callbacks": [callback_handler],
+                "run_id": trace_id,
+                "run_name": "Judge",
+                "metadata": {
+                    "langfuse_session_id": session_id,
+                },
+            },
         ):
             kind = event["event"]
             if kind == "on_tool_start":

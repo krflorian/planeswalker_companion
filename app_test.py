@@ -1,45 +1,54 @@
 import streamlit as st
-from datetime import datetime, timedelta
 
-from streamlit_cookies_controller import CookieController
-
-st.set_page_config("Cookie QuickStart", "🍪", layout="wide")
-
-controller = CookieController()
-
-
-rate_limit = 10
-window_duration = 1
+# Initialize session state for cookies if not already set
+if "accept_ads" not in st.session_state:
+    st.session_state.accept_ads = None  # None means undecided
+if "accept_performance" not in st.session_state:
+    st.session_state.accept_performance = None
+if "popup_shown" not in st.session_state:
+    st.session_state.popup_shown = False  # Track if the popup has been shown
 
 
-def increase_count(window_duration: int = window_duration):
-    """check cookies for request count and increase by one, also set expiration date."""
+# Function to handle cookie preferences
+@st.dialog("Cookie Preferences")
+def handle_cookie_preferences():
+    st.write("### Cookie Preferences")
+    st.write(
+        "We use cookies to improve your experience. ",
+        "https://nissa.planeswalkercompanion.com/info_page",
+    )
+    accept_ads = st.checkbox("Accept cookies for ads")
+    accept_performance = st.checkbox(
+        "Accept cookies for performance", value=True, disabled=True
+    )
 
-    request_count = controller.get("planeswalker/request_count") or 0
-    expiration_date = controller.get("planeswalker/expiration_date")
+    if st.button("Save Preferences"):
+        st.session_state.accept_ads = accept_ads
+        st.success("Your preferences have been saved! 🎉")
 
-    if expiration_date is None:
-        expiration_date = datetime.now() + timedelta(minutes=window_duration)
-        controller.set(
-            "planeswalker/expiration_date",
-            expiration_date.isoformat(),
-            expires=expiration_date,
-        )
+
+# Main app logic
+def main():
+    if not st.session_state.popup_shown:
+        handle_cookie_preferences()
+
+    # Main app content
+    st.title("Welcome to My Streamlit App")
+    if (
+        st.session_state.accept_ads is None
+        or st.session_state.accept_performance is None
+    ):
+        st.info("Please set your cookie preferences using the dialog.")
     else:
-        expiration_date = datetime.fromisoformat(expiration_date)
-        if datetime.now() > expiration_date:
-            expiration_date = datetime.now() + timedelta(minutes=window_duration)
-            request_count = 0
+        st.success("Cookie preferences have been set.")
+        st.write("Here are your preferences:")
+        st.write(
+            f"Cookies for ads: {'Accepted' if st.session_state.accept_ads else 'Declined'}"
+        )
+        st.write(
+            f"Cookies for performance: {'Accepted' if st.session_state.accept_performance else 'Declined'}"
+        )
 
-    request_count += 1
-    controller.set("planeswalker/request_count", request_count, expires=expiration_date)
 
-
-st.button(label="click", on_click=increase_count)
-
-request_count = controller.get("planeswalker/request_count") or 0
-if request_count >= rate_limit:
-    st.error("Rate Limit!")
-    st.stop()
-else:
-    st.write(f"you can still go - requests {request_count}")
+if __name__ == "__main__":
+    main()
