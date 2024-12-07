@@ -3,6 +3,9 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel, Field
 from functools import cache
+from streamlit_cookies_controller import CookieController
+
+cookie_controller = CookieController()
 
 
 class LLMSettings(BaseModel):

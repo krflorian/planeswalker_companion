@@ -25,13 +25,12 @@ st.set_page_config(
 from mtg.views.chat.sidebar import handle_sidebar
 from mtg.views.chat.chat_interface import handle_chat
 from mtg.views.chat.deck_upload import handle_deck_upload_screen
-from streamlit_cookies_controller import CookieController
+from mtg.utils import cookie_controller
 
 logger = get_logger("mtg-bot")
 
 config = load_config("configs/config.yaml")
 
-controller = CookieController()
 langfuse_handler = CallbackHandler()
 
 
@@ -72,7 +71,7 @@ You can learn more about how we handle your data in our [Privacy Policy](https:/
     _ = st.checkbox("Accept cookies for performance", value=True, disabled=True)
 
     if st.button("Save Preferences"):
-        controller.set("planeswalker/performance_cookies", True)
+        cookie_controller.set("planeswalker/performance_cookies", True)
         st.success("Your preferences have been saved! 🎉")
         st.rerun()
 
@@ -142,7 +141,7 @@ if "agent" not in st.session_state:
     )
 
 
-accepted_cookies = controller.get("planeswalker/performance_cookies")
+accepted_cookies = cookie_controller.get("planeswalker/performance_cookies")
 if not accepted_cookies:
     handle_cookie_preferences()
 
