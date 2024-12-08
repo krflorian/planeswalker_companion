@@ -7,12 +7,14 @@ from mtg.utils import (
     parse_card_names,
     to_sync_generator,
     MTGBotConfig,
-    cookie_controller,
 )
 
 from datetime import datetime, timedelta
 from langfuse import Langfuse
+from streamlit_cookies_controller import CookieController
 
+
+cookie_controller = CookieController()
 
 langfuse = Langfuse()
 
@@ -86,10 +88,9 @@ def handle_chat(config: MTGBotConfig, callback_handler=None):
         st.rerun()
 
     if st.session_state.state.judge_called:
-        trace_id = str(uuid4())
 
+        trace_id = str(uuid4())
         with st.chat_message("judge", avatar=judge.PROFILE_PICTURE):
-            trace_id = st.session_state.state.messages[-1]["trace_id"]
             parsed_response = call_agent(
                 agent=judge,
                 agent_executor=st.session_state.judge,
@@ -98,6 +99,9 @@ def handle_chat(config: MTGBotConfig, callback_handler=None):
                 trace_id=trace_id,
                 session_id=st.session_state.state.session_id,
                 config=config,
+            )
+            langfuse.trace(
+                id=trace_id, input=st.session_state.state.messages[-2]["content"]
             )
 
         st.session_state.state.messages.append(

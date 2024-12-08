@@ -1,6 +1,7 @@
 import streamlit as st
 from uuid import uuid4
 from langfuse.callback import CallbackHandler
+from datetime import datetime, timedelta
 
 from mtg.agents import create_memory, create_chat_agent, create_judge_agent
 from mtg.agents import nissa, judge
@@ -13,6 +14,7 @@ from mtg.tools import (
 )
 from mtg.utils.logging import get_logger
 from mtg.utils import load_config
+from streamlit_cookies_controller import CookieController
 
 
 # setup
@@ -25,7 +27,6 @@ st.set_page_config(
 from mtg.views.chat.sidebar import handle_sidebar
 from mtg.views.chat.chat_interface import handle_chat
 from mtg.views.chat.deck_upload import handle_deck_upload_screen
-from mtg.utils import cookie_controller
 
 logger = get_logger("mtg-bot")
 
@@ -71,7 +72,7 @@ You can learn more about how we handle your data in our [Privacy Policy](https:/
     _ = st.checkbox("Accept cookies for performance", value=True, disabled=True)
 
     if st.button("Save Preferences"):
-        cookie_controller.set("planeswalker/performance_cookies", True)
+        st.session_state.cookie_controller.set("planeswalker/performance_cookies", True)
         st.success("Your preferences have been saved! 🎉")
         st.rerun()
 
@@ -140,9 +141,11 @@ if "agent" not in st.session_state:
         model_name=config.llm_settings.judge_llm_model_version,
     )
 
-
+cookie_controller = CookieController()
 accepted_cookies = cookie_controller.get("planeswalker/performance_cookies")
 if not accepted_cookies:
+    cookies = cookie_controller.getAll()
+    logger.info(f"did not find performance_cookies: {cookies}")
     handle_cookie_preferences()
 
 handle_sidebar()
