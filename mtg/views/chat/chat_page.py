@@ -1,7 +1,6 @@
 import streamlit as st
 from uuid import uuid4
 from langfuse.callback import CallbackHandler
-from datetime import datetime, timedelta
 
 from mtg.agents import create_memory, create_chat_agent, create_judge_agent
 from mtg.agents import nissa, judge
@@ -14,8 +13,6 @@ from mtg.tools import (
 )
 from mtg.utils.logging import get_logger
 from mtg.utils import load_config
-from streamlit_cookies_controller import CookieController
-
 
 # setup
 st.set_page_config(
@@ -27,6 +24,7 @@ st.set_page_config(
 from mtg.views.chat.sidebar import handle_sidebar
 from mtg.views.chat.chat_interface import handle_chat
 from mtg.views.chat.deck_upload import handle_deck_upload_screen
+from mtg.views.chat.cookie_handler import handle_cookie_preference_dialog
 
 logger = get_logger("mtg-bot")
 
@@ -54,27 +52,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-
-# Function to handle cookie preferences
-@st.dialog("Cookie Preferences")
-def handle_cookie_preferences():
-    st.write(
-        """
-We Value Your Privacy  
-Our website uses cookies to enhance your experience and provide essential functionality.  
-We use cookies to track user requests for rate limiting and collect anonymized chat message data to continuously improve Nissas Answers.
-
-You can learn more about how we handle your data in our [Privacy Policy](https://nissa.planeswalkercompanion.com/info_page).
-"""
-    )
-    # accept_ads = st.checkbox("Accept cookies for ads")
-    _ = st.checkbox("Accept cookies for performance", value=True, disabled=True)
-
-    if st.button("Save Preferences"):
-        st.session_state.cookie_controller.set("planeswalker/performance_cookies", True)
-        st.success("Your preferences have been saved! 🎉")
-        st.rerun()
 
 
 # HANDLE STATE
@@ -141,13 +118,8 @@ if "agent" not in st.session_state:
         model_name=config.llm_settings.judge_llm_model_version,
     )
 
-cookie_controller = CookieController()
-accepted_cookies = cookie_controller.get("planeswalker/performance_cookies")
-if not accepted_cookies:
-    cookies = cookie_controller.getAll()
-    logger.info(f"did not find performance_cookies: {cookies}")
-    handle_cookie_preferences()
 
+handle_cookie_preference_dialog()
 handle_sidebar()
 handle_deck_upload_screen()
 handle_chat(config=config, callback_handler=langfuse_handler)
