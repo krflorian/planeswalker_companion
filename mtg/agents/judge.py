@@ -59,7 +59,6 @@ async def astream_response(
 ):
     chunks = []
     with container("thinking...") as status:
-        print("trace id", trace_id)
         async for event in agent_executor.astream_events(
             {},
             version="v1",
@@ -87,8 +86,5 @@ async def astream_response(
                 content = event["data"]["chunk"].content
                 if content:
                     status.update(label="Finished research...", state="complete")
-                    # Empty content in the context of OpenAI means
-                    # that the model is asking for a tool to be invoked.
-                    # So we only print non-empty content
                     chunks.append(content)
                     yield content

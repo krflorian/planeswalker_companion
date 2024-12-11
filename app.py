@@ -21,17 +21,14 @@ if "state" not in st.session_state:
         deck_upload_triggered=False,
     )
 
-
 chat_page = st.Page(
     page="mtg/views/chat/chat_page.py",
     title="Chat",
-    # icon=":data/assets/favicon1.jpg:",
 )
 
 info_page = st.Page(
     page="mtg/views/info/info_page.py",
     title="Info",
-    # icon="data/assets/favicon1.jpgs"
 )
 
 pg = st.navigation(pages=[chat_page, info_page])
